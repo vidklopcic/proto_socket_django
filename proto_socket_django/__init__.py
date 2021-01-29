@@ -1,7 +1,7 @@
 import abc
+import datetime
 import uuid
-from typing import Union, Type, Dict, List, Callable
-
+from typing import Union, Type, Dict, List, Callable, Optional
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import JsonWebsocketConsumer
 from channels.layers import get_channel_layer
@@ -65,15 +65,33 @@ class FPSReceiver(abc.ABC):
         self.consumer = consumer
 
 
+class FPSReceiverError:
+    def __init__(self, message):
+        self.message = message
+
+
 # decorators
 #
 def receive(message: Type[pb.RxMessage], permissions: List[str] = None, auth: bool = True):
     def _receive(method):
         from django.contrib.auth.models import User
         def wrapper(self, message_data: pb.RxMessageData, user: User):
+            # check permissions
             if (auth and user is None) or (user and permissions and not user.has_perms(permissions)):
                 raise Exception('unauthorized')
-            return method(self, message(message_data), user)
+
+            # call receiver implementation
+            result = method(self, message(message_data), user)
+
+            # handle ack
+            if message_data.ack:
+                ack_message = pb.TxAck(pb.Ack(uuid=message_data.uuid))
+                if type(result) is FPSReceiverError:
+                    ack_message.proto.error_message = result.message
+                self.consumer.send_message(ack_message)
+
+            return result
+
         wrapper.__receive = message
         wrapper.__receive_auth = auth
         wrapper.__receive_permissions = permissions
@@ -84,3 +102,15 @@ def receive(message: Type[pb.RxMessage], permissions: List[str] = None, auth: bo
 
 def generate_proto(f):
     return f
+
+
+def to_timestamp(datetime: datetime.datetime) -> Optional[int]:
+    if datetime is None:
+        return None
+    return int(datetime.timestamp() * 1000)
+
+
+def from_timestamp(ts) -> Optional[datetime.datetime]:
+    if ts is None:
+        return None
+    return datetime.datetime.fromtimestamp(ts / 1000)

@@ -2,11 +2,12 @@
 #
 import importlib
 import uuid
-from typing import List, Type
+from typing import List, Type, Tuple
 import betterproto
 import stringcase
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.conf import settings
+from bolder_scena import settings
 
 
 class ApiModel(models.Model):
@@ -46,6 +47,66 @@ class ApiModel(models.Model):
         proto: Type[betterproto.Message] = getattr(protos, self.__class__.__name__)
         return proto().from_dict(self.to_proto_map())
 
+    def populate_unrelated_proto(self, proto: betterproto.Message) -> List[str]:
+        from .management.commands.genproto import ProtoGen
+        unbound: List[str] = []
+
+        for field in self._meta.get_fields():
+            field_type = type(field)
+            field_name = field.name
+            field_value = getattr(self, field_name)
+            if field_value is None:
+                continue
+
+            # fixme: check if it's foreignkey set!
+            if not hasattr(proto, field_name) and not field.related_model:
+                unbound.append(field_name)
+                continue
+
+            if field.related_model:
+                field_type = type(field.related_model._meta.pk)
+                field_name = field.name + '_id'
+                if hasattr(proto, field_name) and isinstance(getattr(proto, field_name), field_type):
+                    setattr(proto, field_name, field_value.pk)
+                else:
+                    unbound.append(field_name)
+            elif field.choices:
+                camel_capital_name = stringcase.capitalcase(stringcase.camelcase(field.name))
+                choices: Choices = getattr(self, camel_capital_name)
+                setattr(proto, field_name, choices.get_by_key(getattr(self, field.name)).index)
+            else:
+                if field_type not in ProtoGen.type_map:
+                    print('WARNING:', field_type, 'it not in known types! Ignoring.')
+                    continue
+                setattr(proto, field_name, ProtoGen.type_map[field_type].serialize(getattr(self, field_name)))
+
+        proto._unbount = unbound
+        return proto
+
+    @classmethod
+    def permission(cls, action: str):
+        return f'{cls._meta.app_label}.{action}_{cls._meta.model_name}'
+
+    @classmethod
+    def perms_add(cls) -> List[str]:
+        return [cls.permission('add')]
+
+    @classmethod
+    def perms_delete(cls) -> List[str]:
+        return [cls.permission('delete')]
+
+    @classmethod
+    def perms_change(cls) -> List[str]:
+        return [cls.permission('change')]
+
+    @classmethod
+    def perms_view(cls) -> List[str]:
+        return [cls.permission('view')]
+
+    @classmethod
+    def perms_all(cls) -> List[str]:
+        return cls.perms_add() + cls.perms_change() + cls.perms_delete() + cls.perms_view()
+
 
 class Choice:
     def __init__(self, key, value, index):
@@ -55,6 +116,9 @@ class Choice:
 
     def __eq__(self, obj):
         return isinstance(obj, type(self.key)) and obj == self.key
+
+    def __str__(self):
+        return self.value
 
 
 class Choices:

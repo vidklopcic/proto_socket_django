@@ -21,22 +21,24 @@ class FieldType:
         models.AutoField: 'int32',
         models.BigIntegerField: 'int64',
         models.PositiveIntegerField: 'uint32',
+        models.PositiveBigIntegerField: 'uint64',
         models.FileField: 'string',
         models.DateTimeField: 'uint64',
         models.DateField: 'uint64',
         models.ForeignKey: 'uint16',
+        models.BooleanField: 'bool',
     }
 
     serializers = {
         models.FileField: lambda file: file.url,
         models.DateTimeField: lambda dt: int(dt.timestamp() * 1000),
-        models.DateField: lambda dt: int(dt.timestamp() * 1000),
+        models.DateField: lambda dt: int(datetime(dt.year, dt.month, dt.day).timestamp() * 1000),
     }
 
     deserializers = {
         models.FileField: lambda file: file.url,
-        models.DateTimeField: lambda dt: int(dt.timestamp() * 1000),
-        models.DateField: lambda ts: datetime.fromtimestamp(ts / 1000.0),
+        models.DateTimeField: lambda ts: datetime.fromtimestamp(ts / 1000.0),
+        models.DateField: lambda ts: datetime.fromtimestamp(ts / 1000.0).date(),
     }
 
     def __init__(self, django_type):
@@ -71,6 +73,7 @@ class ProtoGen:
         models.DateTimeField: FieldType(models.DateTimeField),
         models.DateField: FieldType(models.DateField),
         models.ForeignKey: FieldType(models.ForeignKey),
+        models.BooleanField: FieldType(models.BooleanField),
     }
 
     reg_api_models = re.compile('')
