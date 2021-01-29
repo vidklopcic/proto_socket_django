@@ -7,7 +7,7 @@ import betterproto
 import stringcase
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from bolder_scena import settings
+from django.conf import settings
 
 
 class ApiModel(models.Model):
