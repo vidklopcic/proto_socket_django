@@ -2,6 +2,8 @@ import abc
 import datetime
 import uuid
 from typing import Union, Type, Dict, List, Callable, Optional
+
+import pytz
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import JsonWebsocketConsumer
 from channels.layers import get_channel_layer
@@ -113,4 +115,4 @@ def to_timestamp(datetime: datetime.datetime) -> Optional[int]:
 def from_timestamp(ts) -> Optional[datetime.datetime]:
     if ts is None:
         return None
-    return datetime.datetime.fromtimestamp(ts / 1000)
+    return datetime.datetime.fromtimestamp(ts / 1000, tz=pytz.UTC)
