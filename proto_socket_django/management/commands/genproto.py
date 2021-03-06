@@ -8,7 +8,7 @@ import os
 import re
 
 from django.db import models
-from django.utils.datetime_safe import datetime
+from django.utils.timezone import datetime
 
 from ... import api_models
 

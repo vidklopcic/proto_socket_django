@@ -7,6 +7,9 @@ import pytz
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import JsonWebsocketConsumer
 from channels.layers import get_channel_layer
+from django.utils import timezone
+from django.utils.timezone import make_aware
+
 from proto.messages import TxMessage
 import proto.messages as pb
 
@@ -15,6 +18,7 @@ import proto.messages as pb
 #
 class ApiWebsocketConsumer(JsonWebsocketConsumer):
     receivers: List[Type['FPSReceiver']] = []
+    registered_groups = []
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -47,17 +51,35 @@ class ApiWebsocketConsumer(JsonWebsocketConsumer):
         if data.authHeader != self.token and data.authHeader:
             self.token = data.authHeader
             self.user = Token.authenticate(data.authHeader)
+            if self.user:
+                self.on_authenticated()
+
         for handler in self.handlers.get(data.type, []):
             handler(data, self.user)
 
+    def on_authenticated(self):
+        pass
+
     def broadcast_message(self, event):
-        print('tx broadcast:', event['event'])
         self.send_json(event['event'])
 
     @staticmethod
     def broadcast(group: str, message: TxMessage):
         async_to_sync(get_channel_layer().group_send)(group,
                                                       {'type': 'broadcast.message', 'event': message.get_message()})
+
+    def remove_groups(self):
+        for name in self.registered_groups:
+            async_to_sync(self.channel_layer.group_discard)(name, self.channel_name)
+
+    def add_group(self, name):
+        if name in self.registered_groups:
+            return
+        async_to_sync(self.channel_layer.group_add)(name, self.channel_name)
+        self.registered_groups.append(name)
+
+    def disconnect(self, close_code):
+        self.remove_groups()
 
 
 class FPSReceiver(abc.ABC):
@@ -74,16 +96,29 @@ class FPSReceiverError:
 
 # decorators
 #
-def receive(message: Type[pb.RxMessage], permissions: List[str] = None, auth: bool = True):
+def receive(permissions: List[str] = None, auth: bool = True, whitelist_groups: List[str] = None,
+            blacklist_groups: List[str] = None):
     def _receive(method):
+        message = method.__annotations__.get('message')
+        assert message is not None and hasattr(message, 'proto')
+
         from django.contrib.auth.models import User
-        def wrapper(self, message_data: pb.RxMessageData, user: User):
-            # check permissions
-            if (auth and user is None) or (user and permissions and not user.has_perms(permissions)):
+        def wrapper(self: FPSReceiver, message_data: pb.RxMessageData, user: User):
+            authorized = True
+            if auth and user is None:
+                authorized = False
+            elif user and permissions and not user.has_perms(permissions):
+                authorized = False
+            elif user and whitelist_groups and not user.groups.filter(name__in=whitelist_groups).exists():
+                authorized = False
+            elif user and blacklist_groups and user.groups.filter(name__in=blacklist_groups).exists():
+                authorized = False
+
+            if not authorized:
                 raise Exception('unauthorized')
 
             # call receiver implementation
-            result = method(self, message(message_data), user)
+            result = method(self, message(message_data, user))
 
             # handle ack
             if message_data.ack:
@@ -106,13 +141,13 @@ def generate_proto(f):
     return f
 
 
-def to_timestamp(datetime: datetime.datetime) -> Optional[int]:
-    if datetime is None:
+def to_timestamp(dt: timezone.datetime) -> Optional[int]:
+    if dt is None:
         return None
-    return int(datetime.timestamp() * 1000)
+    return int(dt.timestamp() * 1000)
 
 
-def from_timestamp(ts) -> Optional[datetime.datetime]:
+def from_timestamp(ts) -> Optional[timezone.datetime]:
     if ts is None:
         return None
-    return datetime.datetime.fromtimestamp(ts / 1000, tz=pytz.UTC)
+    return timezone.datetime.fromtimestamp(ts / 1000, tz=pytz.utc)
