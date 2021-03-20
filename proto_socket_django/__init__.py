@@ -18,6 +18,7 @@ import proto.messages as pb
 #
 class ApiWebsocketConsumer(JsonWebsocketConsumer):
     receivers: List[Type['FPSReceiver']] = []
+    receiver_instances = {}
     registered_groups = []
 
     def __init__(self, *args, **kwargs):
@@ -29,6 +30,7 @@ class ApiWebsocketConsumer(JsonWebsocketConsumer):
         # register all receivers
         for receiver in self.receivers:
             receiver_instance = receiver(self)
+            self.receiver_instances[receiver] = receiver_instance
             for member_name, method in receiver.__dict__.items():
                 if hasattr(method, "__receive"):
                     mtype = getattr(method, "__receive").type
