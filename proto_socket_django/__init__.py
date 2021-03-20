@@ -80,6 +80,12 @@ class ApiWebsocketConsumer(JsonWebsocketConsumer):
         async_to_sync(self.channel_layer.group_add)(name, self.channel_name)
         self.registered_groups.append(name)
 
+    def remove_group(self, name):
+        if name not in self.registered_groups:
+            return
+        async_to_sync(self.channel_layer.group_discard)(name, self.channel_name)
+        self.registered_groups.remove(name)
+
     def disconnect(self, close_code):
         self.remove_groups()
 
