@@ -18,11 +18,11 @@ import proto.messages as pb
 #
 class ApiWebsocketConsumer(JsonWebsocketConsumer):
     receivers: List[Type['FPSReceiver']] = []
-    receiver_instances = {}
-    registered_groups = []
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.receiver_instances = {}
+        self.registered_groups = []
         self.user = None
         self.token = None
         self.handlers: Dict[str, List[Callable]] = {}
