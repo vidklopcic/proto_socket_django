@@ -124,9 +124,9 @@ def receive(permissions: List[str] = None, auth: bool = True, whitelist_groups: 
 
             if not authorized:
                 self.consumer.send_message(pb.TxTokenInvalid())
-                raise Exception('unauthorized')
+                return
 
-            # call receiver implementation
+                # call receiver implementation
             result = method(self, message(message_data, user))
 
             # handle ack
