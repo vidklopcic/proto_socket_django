@@ -123,6 +123,7 @@ def receive(permissions: List[str] = None, auth: bool = True, whitelist_groups: 
                 authorized = False
 
             if not authorized:
+                self.consumer.send_message(pb.TxTokenInvalid())
                 raise Exception('unauthorized')
 
             # call receiver implementation
