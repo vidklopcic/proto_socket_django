@@ -55,6 +55,9 @@ class ApiWebsocketConsumer(JsonWebsocketConsumer):
             self.user = Token.authenticate(data.authHeader)
             if self.user:
                 self.on_authenticated()
+            else:
+                self.send_message(pb.TxTokenInvalid())
+                return
 
         for handler in self.handlers.get(data.type, []):
             handler(data, self.user)
@@ -123,10 +126,9 @@ def receive(permissions: List[str] = None, auth: bool = True, whitelist_groups: 
                 authorized = False
 
             if not authorized:
-                self.consumer.send_message(pb.TxTokenInvalid())
-                return
+                raise Exception('unauthorized')
 
-                # call receiver implementation
+            # call receiver implementation
             result = method(self, message(message_data, user))
 
             # handle ack
