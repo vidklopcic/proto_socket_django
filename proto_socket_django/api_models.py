@@ -9,8 +9,12 @@ from django.db import models
 from django.conf import settings
 
 
+def _default_id():
+    return str(uuid.uuid1())
+
+
 class ApiModel(models.Model):
-    id = models.CharField(max_length=64, default=lambda: str(uuid.uuid1), primary_key=True)
+    id = models.CharField(max_length=64, default=_default_id, primary_key=True)
     date_created = models.DateTimeField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)
     user = None
