@@ -152,7 +152,9 @@ def generate_proto(f):
     return f
 
 
-def to_timestamp(dt: timezone.datetime) -> Optional[int]:
+def to_timestamp(dt: Union[timezone.datetime, datetime.date]) -> Optional[int]:
+    if not hasattr(dt, 'timestamp'):
+        dt = timezone.datetime(dt.year, dt.month, dt.day)
     if dt is None:
         return None
     return int(dt.timestamp() * 1000)
