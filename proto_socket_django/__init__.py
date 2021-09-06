@@ -1,5 +1,6 @@
 import abc
 import datetime
+import json
 import uuid
 from typing import Union, Type, Dict, List, Callable, Optional
 
@@ -9,13 +10,10 @@ from channels.generic.websocket import JsonWebsocketConsumer
 from channels.layers import get_channel_layer
 from django.utils import timezone
 from django.utils.timezone import make_aware
-
+from django.conf import settings
 from proto.messages import TxMessage
 import proto.messages as pb
 
-
-# API
-#
 class ApiWebsocketConsumer(JsonWebsocketConsumer):
     receivers: List[Type['FPSReceiver']] = []
 
@@ -40,24 +38,30 @@ class ApiWebsocketConsumer(JsonWebsocketConsumer):
 
     def send_message(self, message: TxMessage):
         json = message.get_message()
-        print('tx:', json)
+        if settings.DEBUG:
+            print('tx:', json)
         self.send_json(json)
 
     def connect(self):
         self.accept()
 
-    def receive_json(self, json_data, **kwargs):
+    def authenticate(self):
         from authentication.models import Token
-        print('rx:', json_data)
+        self.user = Token.authenticate(self.token)
+        if self.user:
+            self.on_authenticated()
+        else:
+            self.send_message(pb.TxTokenInvalid())
+            return
+
+    def receive_json(self, json_data, **kwargs):
+        if settings.DEBUG:
+            print('rx:', json_data)
         data = pb.RxMessageData(json_data)
+
         if data.authHeader != self.token and data.authHeader:
             self.token = data.authHeader
-            self.user = Token.authenticate(data.authHeader)
-            if self.user:
-                self.on_authenticated()
-            else:
-                self.send_message(pb.TxTokenInvalid())
-                return
+            self.authenticate()
 
         for handler in self.handlers.get(data.type, []):
             handler(data, self.user)
@@ -104,6 +108,10 @@ class FPSReceiverError:
     def __init__(self, message):
         self.message = message
 
+    @staticmethod
+    def broadcast(group: str, message: TxMessage):
+        AppChannel.broadcast(group, message.get_message())
+
 
 # decorators
 #
@@ -148,15 +156,32 @@ def receive(permissions: List[str] = None, auth: bool = True, whitelist_groups: 
     return _receive
 
 
+class ApiHttpConsumer(ApiWebsocketConsumer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.request = None
+        self.result: List[Dict] = []
+
+    def send_json(self, content, close=False):
+        self.result.append(self.encode_json(content))
+
+    def collect_result(self):
+        result = self.encode_json({
+            'messages': self.result
+        })
+        self.result.clear()
+        return result
+
+
 def generate_proto(f):
     return f
 
 
 def to_timestamp(dt: Union[timezone.datetime, datetime.date]) -> Optional[int]:
-    if not hasattr(dt, 'timestamp'):
-        dt = timezone.datetime(dt.year, dt.month, dt.day)
     if dt is None:
         return None
+    if not hasattr(dt, 'timestamp'):
+        dt = timezone.datetime(dt.year, dt.month, dt.day)
     return int(dt.timestamp() * 1000)
 
 

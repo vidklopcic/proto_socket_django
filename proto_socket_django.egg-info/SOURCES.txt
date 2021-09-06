@@ -6,6 +6,8 @@ proto_socket_django/__init__.py
 proto_socket_django/api_models.py
 proto_socket_django/apps.py
 proto_socket_django/debouncer.py
+proto_socket_django/urls.py
+proto_socket_django/views.py
 proto_socket_django.egg-info/PKG-INFO
 proto_socket_django.egg-info/SOURCES.txt
 proto_socket_django.egg-info/dependency_links.txt
