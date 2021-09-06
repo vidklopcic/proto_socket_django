@@ -14,6 +14,7 @@ from django.conf import settings
 from proto.messages import TxMessage
 import proto.messages as pb
 
+
 class ApiWebsocketConsumer(JsonWebsocketConsumer):
     receivers: List[Type['FPSReceiver']] = []
 
@@ -107,10 +108,6 @@ class FPSReceiver(abc.ABC):
 class FPSReceiverError:
     def __init__(self, message):
         self.message = message
-
-    @staticmethod
-    def broadcast(group: str, message: TxMessage):
-        AppChannel.broadcast(group, message.get_message())
 
 
 # decorators
