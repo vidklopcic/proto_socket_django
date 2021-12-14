@@ -1,18 +1,14 @@
 import abc
 import datetime
-import json
-import uuid
 from typing import Union, Type, Dict, List, Callable, Optional
-
 import pytz
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import JsonWebsocketConsumer
 from channels.layers import get_channel_layer
 from django.utils import timezone
-from django.utils.timezone import make_aware
-from django.conf import settings
 from proto.messages import TxMessage
 import proto.messages as pb
+from django.conf import settings
 
 
 class ApiWebsocketConsumer(JsonWebsocketConsumer):
@@ -112,8 +108,12 @@ class FPSReceiverError:
 
 # decorators
 #
-def receive(permissions: List[str] = None, auth: bool = True, whitelist_groups: List[str] = None,
+def receive(permissions: List[str] = None, auth: bool = None, whitelist_groups: List[str] = None,
             blacklist_groups: List[str] = None):
+
+    if auth is None:
+        auth = getattr(settings, 'PSD_DEFAULT_AUTH', True)
+
     def _receive(method):
         message = method.__annotations__.get('message')
         assert message is not None and hasattr(message, 'proto')
