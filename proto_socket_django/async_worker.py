@@ -1,15 +1,18 @@
 import threading
 import time
 import traceback
-from typing import Callable, Any, List
+from typing import Callable, Any, List, Union
 from attr import dataclass
 from proto.messages import RxMessage
+
+from proto_socket_django import FPSReceiverError
 
 
 @dataclass
 class AsyncMessage:
-    handler: Callable[[RxMessage], Any]
+    handler: Callable[[RxMessage], Union[FPSReceiverError, None]]
     message: RxMessage
+    on_result: Union[Callable[[Union[None, FPSReceiverError]], None], None] = None
 
 
 class AsyncWorker:
@@ -25,7 +28,9 @@ class AsyncWorker:
             if self.message_queue:
                 async_message = self.message_queue.pop(0)
                 try:
-                    async_message.handler(async_message.message)
+                    result = async_message.handler(async_message.message)
+                    if async_message.on_result:
+                        async_message.on_result(result)
                 except:
                     traceback.print_exc()
             else:

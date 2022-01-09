@@ -112,16 +112,16 @@ class FPSReceiver(abc.ABC):
     def __init__(self, consumer: ApiWebsocketConsumer):
         self.consumer = consumer
 
-    def continue_async(self, handler: Callable[[RxMessage], Any], message: RxMessage):
+    def continue_async(self, handler: Callable[[RxMessage], Union[Any, None]], message: RxMessage):
         if not self.consumer.async_workers:
             raise Exception('No async workers. PSD_N_ASYNC_WORKERS should be greater than 0.')
 
-        AsyncWorker.message_queue.append(
-            AsyncMessage(
-                handler=handler,
-                message=message
-            )
+        async_message = AsyncMessage(
+            handler=handler,
+            message=message,
         )
+        AsyncWorker.message_queue.append(async_message)
+        return async_message
 
 
 class FPSReceiverError:
@@ -160,10 +160,16 @@ def receive(permissions: List[str] = None, auth: bool = None, whitelist_groups: 
 
             # handle ack
             if message_data.ack:
-                ack_message = pb.TxAck(pb.Ack(uuid=message_data.uuid))
-                if type(result) is FPSReceiverError:
-                    ack_message.proto.error_message = result.message
-                self.consumer.send_message(ack_message)
+                def _handle_result(result):
+                    ack_message = pb.TxAck(pb.Ack(uuid=message_data.uuid))
+                    if type(result) is FPSReceiverError:
+                        ack_message.proto.error_message = result.message
+                    self.consumer.send_message(ack_message)
+
+                if type(result) is AsyncMessage:
+                    result.on_result = _handle_result
+                else:
+                    _handle_result(result)
 
             return result
 
