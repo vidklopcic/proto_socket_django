@@ -10,7 +10,6 @@ from proto.messages import TxMessage, RxMessage
 import proto.messages as pb
 from django.conf import settings
 import threading
-
 from proto_socket_django.async_worker import AsyncWorker, AsyncMessage
 
 

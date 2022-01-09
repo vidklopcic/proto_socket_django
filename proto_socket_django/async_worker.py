@@ -5,14 +5,12 @@ from typing import Callable, Any, List, Union
 from attr import dataclass
 from proto.messages import RxMessage
 
-from proto_socket_django import FPSReceiverError
-
 
 @dataclass
 class AsyncMessage:
-    handler: Callable[[RxMessage], Union[FPSReceiverError, None]]
+    handler: Callable[[RxMessage], Union['proto_socket_django.FPSReceiverError', None]]
     message: RxMessage
-    on_result: Union[Callable[[Union[None, FPSReceiverError]], None], None] = None
+    on_result: Union[Callable[[Union[None, 'proto_socket_django.FPSReceiverError']], None], None] = None
 
 
 class AsyncWorker:
