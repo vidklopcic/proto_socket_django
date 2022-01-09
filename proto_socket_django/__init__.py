@@ -1,21 +1,32 @@
 import abc
 import datetime
-from typing import Union, Type, Dict, List, Callable, Optional
+from typing import Union, Type, Dict, List, Callable, Optional, Any
 import pytz
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import JsonWebsocketConsumer
 from channels.layers import get_channel_layer
 from django.utils import timezone
-from proto.messages import TxMessage
+from proto.messages import TxMessage, RxMessage
 import proto.messages as pb
 from django.conf import settings
+import threading
+
+from proto_socket_django.async_worker import AsyncWorker, AsyncMessage
 
 
 class ApiWebsocketConsumer(JsonWebsocketConsumer):
     receivers: List[Type['FPSReceiver']] = []
+    async_workers: List[AsyncWorker] = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # spawn async workers on first connection
+        if self.async_workers is None:
+            self.async_workers = []
+            for i in range(getattr(settings, 'PSD_N_ASYNC_WORKERS', 0)):
+                self.async_workers.append(AsyncWorker())
+
         self.receiver_instances = {}
         self.registered_groups = []
         self.user = None
@@ -100,6 +111,17 @@ class FPSReceiver(abc.ABC):
     def __init__(self, consumer: ApiWebsocketConsumer):
         self.consumer = consumer
 
+    def continue_async(self, handler: Callable[[RxMessage], Any], message: RxMessage):
+        if not self.consumer.async_workers:
+            raise Exception('No async workers. PSD_N_ASYNC_WORKERS should be greater than 0.')
+
+        AsyncWorker.message_queue.append(
+            AsyncMessage(
+                handler=handler,
+                message=message
+            )
+        )
+
 
 class FPSReceiverError:
     def __init__(self, message):
@@ -110,7 +132,6 @@ class FPSReceiverError:
 #
 def receive(permissions: List[str] = None, auth: bool = None, whitelist_groups: List[str] = None,
             blacklist_groups: List[str] = None):
-
     if auth is None:
         auth = getattr(settings, 'PSD_DEFAULT_AUTH', True)
 
