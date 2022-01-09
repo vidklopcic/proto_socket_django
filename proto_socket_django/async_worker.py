@@ -1,14 +1,14 @@
 import threading
 import time
 import traceback
-from typing import Callable, Any, List, Union
+from typing import Callable, Any, List, Union, Type
 from attr import dataclass
 from proto.messages import RxMessage
 
 
 @dataclass
 class AsyncMessage:
-    handler: Callable[[RxMessage], Union['proto_socket_django.FPSReceiverError', None]]
+    handler: Callable[[Type[RxMessage]], Union['proto_socket_django.FPSReceiverError', None]]
     message: RxMessage
     on_result: Union[Callable[[Union[None, 'proto_socket_django.FPSReceiverError']], None], None] = None
 
