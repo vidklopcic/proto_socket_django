@@ -111,7 +111,7 @@ class FPSReceiver(abc.ABC):
     def __init__(self, consumer: ApiWebsocketConsumer):
         self.consumer = consumer
 
-    def continue_async(self, handler: Callable[[Type[RxMessage]], Union[Any, None]], message: RxMessage):
+    def continue_async(self, handler: Callable[[Any], Union[Any, None]], message: RxMessage):
         if not self.consumer.async_workers:
             raise Exception('No async workers. PSD_N_ASYNC_WORKERS should be greater than 0.')
 
