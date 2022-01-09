@@ -1,3 +1,4 @@
+import threading
 import time
 import traceback
 from typing import Callable, Any, List
@@ -15,7 +16,9 @@ class AsyncWorker:
     message_queue: List[AsyncMessage] = []
 
     def __init__(self):
-        self.runner()
+        self.thread = threading.Thread(target=self.runner)
+        self.thread.setDaemon(True)
+        self.thread.start()
 
     def runner(self):
         while True:

@@ -25,6 +25,7 @@ class ApiWebsocketConsumer(JsonWebsocketConsumer):
         if self.async_workers is None:
             self.async_workers = []
             for i in range(getattr(settings, 'PSD_N_ASYNC_WORKERS', 0)):
+                print('starting async worker', i)
                 self.async_workers.append(AsyncWorker())
 
         self.receiver_instances = {}
