@@ -9,7 +9,6 @@ from proto.messages import RxMessage
 @dataclass
 class AsyncMessage:
     handler: Callable
-    message: RxMessage
     args: Tuple
     kwargs: Dict
     on_result: Union[Callable[[Union[None, 'proto_socket_django.FPSReceiverError']], None], None] = None
@@ -28,7 +27,7 @@ class AsyncWorker:
             if self.message_queue:
                 async_message = self.message_queue.pop(0)
                 try:
-                    result = async_message.handler(async_message.message, *async_message.args, **async_message.kwargs)
+                    result = async_message.handler(*async_message.args, **async_message.kwargs)
                     if async_message.on_result:
                         async_message.on_result(result)
                 except:
