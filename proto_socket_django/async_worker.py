@@ -11,6 +11,7 @@ class AsyncMessage:
     handler: Callable
     args: Tuple
     kwargs: Dict
+    run: Callable[[], None]
     on_result: Union[Callable[[Union[None, 'proto_socket_django.FPSReceiverError']], None], None] = None
 
 

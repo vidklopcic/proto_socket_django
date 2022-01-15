@@ -1,5 +1,6 @@
 import abc
 import datetime
+import traceback
 from typing import Union, Type, Dict, List, Callable, Optional, Any
 import pytz
 from asgiref.sync import async_to_sync
@@ -118,9 +119,9 @@ class FPSReceiver(abc.ABC):
         async_message = AsyncMessage(
             handler=handler,
             args=args,
-            kwargs=kwargs
+            kwargs=kwargs,
+            run=lambda: AsyncWorker.message_queue.append(async_message)
         )
-        AsyncWorker.message_queue.append(async_message)
         return async_message
 
 
@@ -135,6 +136,7 @@ def receive(permissions: List[str] = None, auth: bool = None, whitelist_groups: 
             blacklist_groups: List[str] = None):
     if auth is None:
         auth = getattr(settings, 'PSD_DEFAULT_AUTH', True)
+    forward_exceptions = getattr(settings, 'PSD_FORWARD_EXCEPTIONS', False)
 
     def _receive(method):
         message = method.__annotations__.get('message')
@@ -142,36 +144,43 @@ def receive(permissions: List[str] = None, auth: bool = None, whitelist_groups: 
 
         from django.contrib.auth.models import User
         def wrapper(self: FPSReceiver, message_data: pb.RxMessageData, user: User):
-            authorized = True
-            if auth and user is None:
-                authorized = False
-            elif user and permissions and not user.has_perms(permissions):
-                authorized = False
-            elif user and whitelist_groups and not user.groups.filter(name__in=whitelist_groups).exists():
-                authorized = False
-            elif user and blacklist_groups and user.groups.filter(name__in=blacklist_groups).exists():
-                authorized = False
+            def _handle_result(result):
+                ack_message = pb.TxAck(pb.Ack(uuid=message_data.uuid))
+                if type(result) is FPSReceiverError:
+                    ack_message.proto.error_message = result.message
+                self.consumer.send_message(ack_message)
 
-            if not authorized:
-                raise Exception('unauthorized')
+            try:
+                authorized = True
+                if auth and user is None:
+                    authorized = False
+                elif user and permissions and not user.has_perms(permissions):
+                    authorized = False
+                elif user and whitelist_groups and not user.groups.filter(name__in=whitelist_groups).exists():
+                    authorized = False
+                elif user and blacklist_groups and user.groups.filter(name__in=blacklist_groups).exists():
+                    authorized = False
 
-            # call receiver implementation
-            result = method(self, message(message_data, user))
+                if not authorized:
+                    raise Exception('unauthorized')
 
-            # handle ack
-            if message_data.ack:
-                def _handle_result(result):
-                    ack_message = pb.TxAck(pb.Ack(uuid=message_data.uuid))
-                    if type(result) is FPSReceiverError:
-                        ack_message.proto.error_message = result.message
-                    self.consumer.send_message(ack_message)
+                # call receiver implementation
+                result = method(self, message(message_data, user))
 
-                if type(result) is AsyncMessage:
-                    result.on_result = _handle_result
-                else:
-                    _handle_result(result)
+                # handle ack
+                if message_data.ack:
+                    if type(result) is AsyncMessage:
+                        result.on_result = _handle_result
+                        result.run()
+                    else:
+                        _handle_result(result)
 
-            return result
+                return result
+            except:
+                if forward_exceptions and message_data.ack:
+                    _handle_result(FPSReceiverError(traceback.format_exc()))
+                elif not forward_exceptions:
+                    raise
 
         wrapper.__receive = message
         wrapper.__receive_auth = auth
