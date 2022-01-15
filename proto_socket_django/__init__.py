@@ -126,8 +126,9 @@ class FPSReceiver(abc.ABC):
 
 
 class FPSReceiverError:
-    def __init__(self, message):
+    def __init__(self, message, code=None):
         self.message = message
+        self.code = code
 
 
 # decorators
@@ -148,6 +149,7 @@ def receive(permissions: List[str] = None, auth: bool = None, whitelist_groups: 
                 ack_message = pb.TxAck(pb.Ack(uuid=message_data.uuid))
                 if type(result) is FPSReceiverError:
                     ack_message.proto.error_message = result.message
+                    ack_message.proto.error_code = result.code
                 self.consumer.send_message(ack_message)
 
             try:
