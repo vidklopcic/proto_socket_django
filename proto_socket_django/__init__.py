@@ -105,16 +105,10 @@ class ApiWebsocketConsumer(JsonWebsocketConsumer):
     def disconnect(self, close_code):
         self.remove_groups()
 
-
-class FPSReceiver(abc.ABC):
-    receivers: Dict[str, str] = {}
-
-    def __init__(self, consumer: ApiWebsocketConsumer):
-        self.consumer = consumer
-
-    def continue_async(self, handler: Callable[[Any], Union[Any, None]], *args, **kwargs):
-        if not self.consumer.async_workers:
-            raise Exception('No async workers. PSD_N_ASYNC_WORKERS should be greater than 0.')
+    @classmethod
+    def continue_async(cls, handler: Callable[[Any], Union[Any, None]], *args, **kwargs):
+        if not cls.async_workers:
+            raise Exception('No async workers. Is PSD_N_ASYNC_WORKERS > 0 and consumer set-up?')
 
         async_message = AsyncMessage(
             handler=handler,
@@ -123,6 +117,16 @@ class FPSReceiver(abc.ABC):
             run=lambda: AsyncWorker.message_queue.append(async_message)
         )
         return async_message
+
+
+class FPSReceiver(abc.ABC):
+    receivers: Dict[str, str] = {}
+
+    def __init__(self, consumer: ApiWebsocketConsumer):
+        self.consumer = consumer
+
+    def continue_async(self, handler: Callable[[Any], Union[Any, None]], *args, **kwargs):
+        return ApiWebsocketConsumer.continue_async(handler, *args, **kwargs)
 
 
 class FPSReceiverError:
