@@ -185,6 +185,7 @@ def receive(permissions: List[str] = None, auth: bool = None, whitelist_groups: 
                 return result
             except Exception as e:
                 if forward_exceptions and message_data.ack:
+                    traceback.print_exc()
                     _handle_result(FPSReceiverError(format_exception(e)))
                 elif not forward_exceptions:
                     raise
