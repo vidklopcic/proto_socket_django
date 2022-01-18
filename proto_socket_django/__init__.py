@@ -142,6 +142,7 @@ def receive(permissions: List[str] = None, auth: bool = None, whitelist_groups: 
     if auth is None:
         auth = getattr(settings, 'PSD_DEFAULT_AUTH', True)
     forward_exceptions = getattr(settings, 'PSD_FORWARD_EXCEPTIONS', False)
+    format_exception = getattr(settings, 'PSD_EXCEPTION_FORMATTER', lambda e: str(e))
 
     def _receive(method):
         message = method.__annotations__.get('message')
@@ -182,9 +183,9 @@ def receive(permissions: List[str] = None, auth: bool = None, whitelist_groups: 
                         _handle_result(result)
 
                 return result
-            except:
+            except Exception as e:
                 if forward_exceptions and message_data.ack:
-                    _handle_result(FPSReceiverError(traceback.format_exc()))
+                    _handle_result(FPSReceiverError(format_exception(e)))
                 elif not forward_exceptions:
                     raise
 
