@@ -22,11 +22,11 @@ class ApiWebsocketConsumer(JsonWebsocketConsumer):
         super().__init__(*args, **kwargs)
 
         # spawn async workers on first connection
-        if self.async_workers is None:
-            self.async_workers = []
+        if ApiWebsocketConsumer.async_workers is None:
+            ApiWebsocketConsumer.async_workers = []
             for i in range(getattr(settings, 'PSD_N_ASYNC_WORKERS', 0)):
                 print('starting async worker', i)
-                self.async_workers.append(AsyncWorker())
+                ApiWebsocketConsumer.async_workers.append(AsyncWorker())
 
         self.receiver_instances = {}
         self.registered_groups = []
