@@ -1,7 +1,10 @@
 import abc
 import datetime
+import json
 import traceback
 from typing import Union, Type, Dict, List, Callable, Optional, Any
+from uuid import UUID
+
 import pytz
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import JsonWebsocketConsumer
@@ -50,6 +53,9 @@ class ApiWebsocketConsumer(JsonWebsocketConsumer):
         if settings.DEBUG:
             print('tx:', json)
         self.send_json(json)
+
+    def encode_json(cls, content):
+        return json.dumps(content, cls=UUIDEncoder)
 
     def connect(self):
         self.accept()
@@ -231,3 +237,11 @@ def from_timestamp(ts) -> Optional[timezone.datetime]:
     if ts is None:
         return None
     return timezone.datetime.fromtimestamp(ts / 1000, tz=pytz.utc)
+
+
+class UUIDEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, UUID):
+            # if the obj is uuid, we simply return the value of uuid
+            return obj.hex
+        return json.JSONEncoder.default(self, obj)
