@@ -14,7 +14,7 @@ def _default_id():
 
 
 class ApiModel(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.UUIDField(primary_key=True, default=getattr(settings, 'PSD_DEFAULT_UUID', uuid.uuid4), editable=False)
     date_created = models.DateTimeField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)
     user = None
