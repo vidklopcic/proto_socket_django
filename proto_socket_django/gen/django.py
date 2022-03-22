@@ -14,5 +14,5 @@ if not os.path.isfile('fps_config.json') or not os.path.isfile('manage.py'):
 proto_out = 'proto'
 delete_existing(proto_out)
 proto_path, protos = get_protos(json.load(open('fps_config.json')), '-I')
-subprocess.run(f'protoc {proto_path} --python_betterproto_out={proto_out} {protos}', shell=True)
+subprocess.run(f'protoc {proto_path} --python_betterproto_out={proto_out} {" ".join(protos)}', shell=True)
 generate(protos)
