@@ -6,6 +6,19 @@ README = open(os.path.join(here, 'README.rst')).read()
 
 from glob import glob
 
+
+def find_data_files():
+    pathlist = ['gen/common']
+    data = {}
+    for path in pathlist:
+        for root, d_names, f_names in os.walk(path, topdown=True, onerror=None, followlinks=False):
+            data[root] = list()
+            for f in f_names:
+                data[root].append(os.path.join(root, f))
+
+    fn = [(k, v) for k, v in data.items()]
+    return fn
+
 setup(
     name='proto-socket-django',
     version='0.1',
@@ -17,9 +30,7 @@ setup(
         'proto_socket_django.gen.platforms.flutter',
         'proto_socket_django.gen.platforms.react',
     ],
-    data_files=[
-        ('gen/common/', glob('gen/common/**/*', recursive=True))
-    ],
+    data_files=find_data_files(),
     description='A simple library that works with flutter_persistent_socket library.',
     long_description=README,
     author='Vid Klopcic',
