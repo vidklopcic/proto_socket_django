@@ -1,18 +1,15 @@
-import abc
-import datetime
-import json
-import sys
-import traceback
-from typing import Union, Type, Dict, List, Callable, Optional, Any
-from uuid import UUID
-
-import pytz
-from asgiref.sync import async_to_sync
-from channels.generic.websocket import JsonWebsocketConsumer
-from channels.layers import get_channel_layer
-from django.utils import timezone
-
 try:
+    import abc
+    import datetime
+    import json
+    import traceback
+    from typing import Union, Type, Dict, List, Callable, Optional, Any
+    from uuid import UUID
+    import pytz
+    from asgiref.sync import async_to_sync
+    from channels.generic.websocket import JsonWebsocketConsumer
+    from channels.layers import get_channel_layer
+    from django.utils import timezone
     from proto.messages import TxMessage, RxMessage
     import proto.messages as pb
     from django.conf import settings
