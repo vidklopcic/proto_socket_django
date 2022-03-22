@@ -7,7 +7,14 @@ README = open(os.path.join(here, 'README.rst')).read()
 setup(
     name='proto-socket-django',
     version='0.1',
-    packages=['proto_socket_django', 'proto_socket_django.gen'],
+    packages=[
+        'proto_socket_django',
+        'proto_socket_django.gen',
+        'proto_socket_django.gen.platforms',
+        'proto_socket_django.gen.platforms.django',
+        'proto_socket_django.gen.platforms.flutter',
+        'proto_socket_django.gen.platforms.react',
+    ],
     description='A simple library that works with flutter_persistent_socket library.',
     long_description=README,
     author='Vid Klopcic',
