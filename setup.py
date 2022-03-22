@@ -8,7 +8,7 @@ from glob import glob
 
 
 def find_data_files():
-    pathlist = ['gen/common']
+    pathlist = ['proto_socket_django/gen/common']
     data = {}
     for path in pathlist:
         for root, d_names, f_names in os.walk(path, topdown=True, onerror=None, followlinks=False):
