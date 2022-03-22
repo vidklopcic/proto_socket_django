@@ -13,7 +13,7 @@ def discover_protos(dir: str):
     return protos
 
 
-COMMON_PROTO = P(__file__).parent.resolve() / 'common'
+COMMON_PROTO = str(P(__file__).parent.resolve() / 'common')
 
 
 def delete_existing(dir):
@@ -22,8 +22,8 @@ def delete_existing(dir):
     os.makedirs(dir)
 
 
-def get_protos(config, parth_arg):
+def get_protos(config, path_arg):
     config['protos'] = set([os.path.expandvars(p) for p in config['protos']] + [COMMON_PROTO])
-    proto_path = ' '.join([parth_arg + ' ' + i for i in config['protos']])
+    proto_path = ' '.join([path_arg + ' ' + i for i in config['protos']])
     protos = ' '.join([p for ps in [discover_protos(i) for i in config['protos']] for p in ps])
     return proto_path, protos
