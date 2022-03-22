@@ -245,5 +245,4 @@ try:
                 return str(obj)
             return json.JSONEncoder.default(self, obj)
 except:
-    if __name__ != '__main__':
-        traceback.print_exc()
+    pass
