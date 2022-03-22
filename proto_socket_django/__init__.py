@@ -1,6 +1,7 @@
 import abc
 import datetime
 import json
+import sys
 import traceback
 from typing import Union, Type, Dict, List, Callable, Optional, Any
 from uuid import UUID
@@ -10,16 +11,19 @@ from asgiref.sync import async_to_sync
 from channels.generic.websocket import JsonWebsocketConsumer
 from channels.layers import get_channel_layer
 from django.utils import timezone
-from proto.messages import TxMessage, RxMessage
-import proto.messages as pb
-from django.conf import settings
-import threading
-from proto_socket_django.async_worker import AsyncWorker, AsyncMessage
+
+try:
+    from proto.messages import TxMessage, RxMessage
+    import proto.messages as pb
+    from django.conf import settings
+    from proto_socket_django.async_worker import AsyncWorker, AsyncMessage
+except:
+    pass
 
 
 class ApiWebsocketConsumer(JsonWebsocketConsumer):
     receivers: List[Type['FPSReceiver']] = []
-    async_workers: List[AsyncWorker] = None
+    async_workers: List['AsyncWorker'] = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -48,7 +52,7 @@ class ApiWebsocketConsumer(JsonWebsocketConsumer):
                         self.handlers[mtype] = []
                     self.handlers[mtype].append(getattr(receiver_instance, member_name))
 
-    def send_message(self, message: TxMessage):
+    def send_message(self, message: 'TxMessage'):
         json = message.get_message()
         if settings.DEBUG:
             print('tx:', json)
@@ -88,7 +92,7 @@ class ApiWebsocketConsumer(JsonWebsocketConsumer):
         self.send_json(event['event'])
 
     @staticmethod
-    def broadcast(group: str, message: TxMessage):
+    def broadcast(group: str, message: 'TxMessage'):
         async_to_sync(get_channel_layer().group_send)(group,
                                                       {'type': 'broadcast.message', 'event': message.get_message()})
 
