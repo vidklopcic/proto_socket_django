@@ -4,7 +4,7 @@ import re
 import os
 from typing import List
 
-import messages_templates as templates
+from proto_socket_django.gen.platforms.django import messages_templates as templates
 from proto_socket_django.gen.platforms import get_psd_messages
 
 
