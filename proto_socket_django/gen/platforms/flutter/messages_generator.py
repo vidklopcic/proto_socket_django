@@ -2,7 +2,7 @@ import argparse
 import sys
 import re
 from typing import List
-from proto_socket_django.gen.platforms.django import messages_templates as templates
+from proto_socket_django.gen.platforms.flutter import messages_templates as templates
 from proto_socket_django.gen.platforms import get_psd_messages
 
 
