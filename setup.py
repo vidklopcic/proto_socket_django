@@ -4,20 +4,6 @@ from setuptools import setup
 here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.rst')).read()
 
-from glob import glob
-
-
-def find_data_files():
-    pathlist = ['proto_socket_django/gen/common']
-    data = {}
-    for path in pathlist:
-        for root, d_names, f_names in os.walk(path, topdown=True, onerror=None, followlinks=False):
-            data[root] = list()
-            for f in f_names:
-                data[root].append(os.path.join(root, f))
-
-    fn = [(k, v) for k, v in data.items()]
-    return fn
 
 setup(
     name='proto-socket-django',
@@ -30,7 +16,7 @@ setup(
         'proto_socket_django.gen.platforms.flutter',
         'proto_socket_django.gen.platforms.react',
     ],
-    data_files=find_data_files(),
+    include_package_data=True,
     description='A simple library that works with flutter_persistent_socket library.',
     long_description=README,
     author='Vid Klopcic',
