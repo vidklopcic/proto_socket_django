@@ -1,4 +1,5 @@
 import argparse
+import os
 import subprocess
 import sys
 
@@ -6,12 +7,19 @@ import sys
 def for_flutter():
     pass
 
+
 def for_react():
-    subprocess.check_output(['npm', 'install', '--global', 'pbjs'])
+    subprocess.check_output(['npm', 'install', '--global', 'protobufjs'])
 
 
 def for_django():
     import pip
+    if os.geteuid() != 0:
+        result = input('Installing "betterproto[compiler]" without sudo privileges. If this is a global installation '
+                       '"protoc-gen-python_betterproto" binary won\'t be added to the system path. Continue? [y/N]')
+        if result.strip() != 'y':
+            sys.exit(1)
+
     pip.main(['install', 'betterproto[compiler]'])
 
 
