@@ -41,7 +41,7 @@ class TxMessage(ABC):
     def __init__(self, proto=None):
         self.fields = {}
         if proto is not None:
-            assert type(proto) is self.proto
+            assert isinstance(proto, self.proto)
             self.proto = proto
         else:
             self.proto = self.proto()
