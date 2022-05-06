@@ -165,14 +165,16 @@ try:
 
                 try:
                     authorized = True
-                    if auth and user is None:
-                        authorized = False
-                    elif user and permissions and not user.has_perms(permissions):
-                        authorized = False
-                    elif user and whitelist_groups and not user.groups.filter(name__in=whitelist_groups).exists():
-                        authorized = False
-                    elif user and blacklist_groups and user.groups.filter(name__in=blacklist_groups).exists():
-                        authorized = False
+
+                    if auth or whitelist_groups or blacklist_groups or permissions:
+                        if user is None:
+                            authorized = False
+                        elif user and permissions and not user.has_perms(permissions):
+                            authorized = False
+                        elif user and whitelist_groups and not user.groups.filter(name__in=whitelist_groups).exists():
+                            authorized = False
+                        elif user and blacklist_groups and user.groups.filter(name__in=blacklist_groups).exists():
+                            authorized = False
 
                     if not authorized:
                         raise Exception('unauthorized')
