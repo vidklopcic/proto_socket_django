@@ -37,7 +37,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Install / check required dependencies for supported platforms (e.g., protobuf)')
     parser.add_argument('--protoc')
-    parser.add_argument('--platforms', type=str, default='flutter,react,django.py')
+    parser.add_argument('--platforms', type=str, default='flutter,react,django')
     args = parser.parse_args()
 
     if args.protoc:
