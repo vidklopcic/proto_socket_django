@@ -265,6 +265,8 @@ try:
         for field in betterproto.dataclasses.fields(self):
             meta = betterproto.FieldMetadata.get(field)
             v = getattr(self, field.name)
+            if isinstance(v, betterproto._PLACEHOLDER) and not include_default_values:
+                continue
             cased_name = casing(field.name).rstrip("_")  # type: ignore
             if meta.proto_type == "message":
                 if isinstance(v, betterproto.datetime):
@@ -282,7 +284,7 @@ try:
                     if v or include_default_values:
                         output[cased_name] = v
                 else:
-                    if v._serialized_on_wire or include_default_values:
+                    if getattr(v, '_serialized_on_wire', False) or include_default_values:
                         output[cased_name] = v.to_dict(casing, include_default_values)
             elif meta.proto_type == "map":
                 for k in v:
