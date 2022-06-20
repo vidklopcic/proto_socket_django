@@ -191,7 +191,7 @@ def generate(protos: List[str]):
     imports.add("import 'package:provider/provider.dart';")
     imports.add("import 'package:flutter_persistent_socket/communication/socket_api.dart';")
     imports.add("import 'package:provider/single_child_widget.dart';")
-    imports.add("import 'package:moor/moor.dart';")
+    imports.add("import 'package:drift/drift.dart';")
     imports.update(set([i.get_import() for i in generators]))
 
     with open('./lib/messages.dart', 'w', encoding='utf-8') as f:
