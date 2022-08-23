@@ -1,9 +1,11 @@
 import threading
 import time
 import traceback
+from sqlite3 import InterfaceError
 from typing import Callable, Any, List, Union, Type, Dict, Tuple
 from attr import dataclass
 from proto.messages import RxMessage
+from django.db import connections
 
 
 @dataclass
@@ -24,6 +26,7 @@ class AsyncWorker:
         self.thread.start()
 
     def runner(self):
+        last_conn_check = time.time()
         while True:
             if self.message_queue:
                 async_message = self.message_queue.pop(0)
@@ -31,7 +34,22 @@ class AsyncWorker:
                     result = async_message.handler(*async_message.args, **async_message.kwargs)
                     if async_message.on_result:
                         async_message.on_result(result)
+                except InterfaceError:
+                    traceback.print_exc()
+                    print('restarting worker')
+                    self.thread = threading.Thread(target=self.runner)
+                    self.thread.setDaemon(True)
+                    self.thread.start()
+                    return
                 except:
                     traceback.print_exc()
+
             else:
                 time.sleep(0.05)
+                try:
+                    if time.time() - last_conn_check > 10:
+                        last_conn_check = time.time()
+                        for conn in connections.all():
+                            conn.close_if_unusable_or_obsolete()
+                except:
+                    traceback.print_exc()
