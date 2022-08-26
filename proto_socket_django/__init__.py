@@ -177,7 +177,7 @@ try:
                             authorized = False
 
                     if not authorized:
-                        raise Exception('unauthorized')
+                        raise Exception(user, 'is unauthorized for', message)
 
                     # call receiver implementation
                     result = method(self, message(message_data, user))
