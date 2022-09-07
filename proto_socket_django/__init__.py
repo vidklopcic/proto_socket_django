@@ -21,15 +21,18 @@ try:
         receivers: List[Type['FPSReceiver']] = []
         async_workers: List['AsyncWorker'] = None
 
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-
-            # spawn async workers on first connection
+        @classmethod
+        def static_init(cls):
             if ApiWebsocketConsumer.async_workers is None:
                 ApiWebsocketConsumer.async_workers = []
                 for i in range(getattr(settings, 'PSD_N_ASYNC_WORKERS', 0)):
                     print('starting async worker', i)
                     ApiWebsocketConsumer.async_workers.append(AsyncWorker())
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
+            ApiWebsocketConsumer.static_init()
 
             self.receiver_instances = {}
             self.registered_groups = []
@@ -166,7 +169,8 @@ try:
                 try:
                     authorized = True
 
-                    if (auth or whitelist_groups or blacklist_groups or permissions) and user and (not user.is_superuser):
+                    if (auth or whitelist_groups or blacklist_groups or permissions) and user and (
+                            not user.is_superuser):
                         if user is None:
                             authorized = False
                         elif permissions and not user.has_perms(permissions):
