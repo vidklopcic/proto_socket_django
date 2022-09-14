@@ -169,8 +169,7 @@ try:
                 try:
                     authorized = True
 
-                    if (auth or whitelist_groups or blacklist_groups or permissions) and user and (
-                            not user.is_superuser):
+                    if (auth or whitelist_groups or blacklist_groups or permissions) and (not user or not user.is_superuser):
                         if user is None:
                             authorized = False
                         elif permissions and not user.has_perms(permissions):
