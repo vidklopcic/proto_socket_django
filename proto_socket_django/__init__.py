@@ -116,6 +116,7 @@ try:
 
         @classmethod
         def continue_async(cls, handler: Callable[[Any], Union[Any, None]], *args, **kwargs):
+            cls.static_init()
             if not cls.async_workers:
                 raise Exception('No async workers. Is PSD_N_ASYNC_WORKERS > 0 and consumer set-up?')
 
