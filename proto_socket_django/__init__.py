@@ -309,6 +309,11 @@ try:
                         output[cased_name] = [betterproto.b64encode(b).decode("utf8") for b in v]
                     else:
                         output[cased_name] = betterproto.b64encode(v).decode("utf8")
+                elif meta.proto_type == betterproto.TYPE_STRING:
+                    if isinstance(v, list):
+                        output[cased_name] = [str(b) for b in v]
+                    else:
+                        output[cased_name] = str(v)
                 elif meta.proto_type == betterproto.TYPE_ENUM:
                     enum_values = {
                         int(v): v for v in self._betterproto.cls_by_field[field.name]
