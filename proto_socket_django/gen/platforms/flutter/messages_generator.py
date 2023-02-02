@@ -105,7 +105,7 @@ class MessagesGenerator:
                         )
                     )
                     cache_fields.append(
-                        '''GeneratedColumn<String?> {0}(table) => {0}Key.textField(table);'''.format(
+                        '''GeneratedColumn<String> {0}(table) => {0}Key.textField(table);'''.format(
                             text_key, i
                         )
                     )
@@ -117,7 +117,7 @@ class MessagesGenerator:
                         )
                     )
                     cache_fields.append(
-                        '''GeneratedColumn<double?> {0}(table) => {0}Key.realField(table);'''.format(
+                        '''GeneratedColumn<double> {0}(table) => {0}Key.realField(table);'''.format(
                             real_key, i
                         )
                     )
@@ -129,7 +129,7 @@ class MessagesGenerator:
                         )
                     )
                     cache_fields.append(
-                        '''GeneratedColumn<DateTime?> {0}(table) => {0}Key.dateField(table);'''.format(
+                        '''GeneratedColumn<DateTime> {0}(table) => {0}Key.dateField(table);'''.format(
                             date_key, i
                         )
                     )
