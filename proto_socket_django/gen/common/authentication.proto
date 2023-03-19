@@ -8,6 +8,7 @@ client cache = years(1)
  */
 message LoginToken {
   string token = 1;
+  string refresh = 2;
 }
 
 /*
@@ -27,6 +28,14 @@ auth = false
 message Login {
   string username = 1;
   string password = 2;
+}
+
+/*
+type = 'refresh-token'
+origin = client
+ */
+message RefreshToken {
+  string refresh_token = 1;
 }
 
 /*
