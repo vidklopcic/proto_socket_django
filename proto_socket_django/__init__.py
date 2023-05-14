@@ -1,3 +1,5 @@
+import inspect
+
 try:
     import betterproto
     import abc
@@ -14,20 +16,28 @@ try:
     from proto.messages import TxMessage, RxMessage
     import proto.messages as pb
     from django.conf import settings
-    from proto_socket_django.async_worker import AsyncWorker, AsyncMessage
+    from proto_socket_django.worker import SyncWorker, AsyncWorker, LongRunningTask
 
 
     class ApiWebsocketConsumer(JsonWebsocketConsumer):
         receivers: List[Type['FPSReceiver']] = []
-        async_workers: List['AsyncWorker'] = None
+        sync_workers: List['SyncWorker'] = None
+        async_worker: Optional[AsyncWorker] = None
 
         @classmethod
         def static_init(cls):
-            if ApiWebsocketConsumer.async_workers is None:
-                ApiWebsocketConsumer.async_workers = []
-                for i in range(getattr(settings, 'PSD_N_ASYNC_WORKERS', 0)):
-                    print('starting async worker', i)
-                    ApiWebsocketConsumer.async_workers.append(AsyncWorker())
+            if ApiWebsocketConsumer.sync_workers is None:
+                ApiWebsocketConsumer.sync_workers = []
+                if hasattr(settings, 'PSD_N_ASYNC_WORKERS'):
+                    raise 'PSD_N_ASYNC_WORKERS renamed to PSD_N_SYNC_WORKERS'
+
+                for i in range(getattr(settings, 'PSD_N_SYNC_WORKERS', 0)):
+                    print('starting sync worker', i)
+                    ApiWebsocketConsumer.sync_workers.append(AsyncWorker())
+
+            if getattr(settings, 'PSD_RUN_ASYNC_WORKER', True) and ApiWebsocketConsumer.async_worker is None:
+                print('starting async worker')
+                ApiWebsocketConsumer.async_worker = AsyncWorker()
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -117,16 +127,22 @@ try:
         @classmethod
         def continue_async(cls, handler: Callable[[Any], Union[Any, None]], *args, **kwargs):
             cls.static_init()
-            if not cls.async_workers:
-                raise Exception('No async workers. Is PSD_N_ASYNC_WORKERS > 0 and consumer set-up?')
+            is_coroutine = inspect.iscoroutinefunction(handler)
+            if not is_coroutine and not cls.sync_workers:
+                raise Exception('No sync workers. Is PSD_N_ASYNC_WORKERS > 0 and consumer set-up?')
 
-            async_message = AsyncMessage(
+            if is_coroutine and not cls.async_worker:
+                raise Exception('No async worker. Is PSD_RUN_ASYNC_WORKER = True and consumer set-up?')
+
+            queue = AsyncWorker.task_queue if is_coroutine else SyncWorker.task_queue
+            task = LongRunningTask(
                 handler=handler,
                 args=args,
                 kwargs=kwargs,
-                run=lambda: AsyncWorker.message_queue.append(async_message)
+                run=lambda: queue.put(task),
+                is_coroutine=is_coroutine
             )
-            return async_message
+            return task
 
 
     class FPSReceiver(abc.ABC):
@@ -170,7 +186,8 @@ try:
                 try:
                     authorized = True
 
-                    if (auth or whitelist_groups or blacklist_groups or permissions) and (not user or not user.is_superuser):
+                    if (auth or whitelist_groups or blacklist_groups or permissions) and (
+                            not user or not user.is_superuser):
                         if user is None:
                             authorized = False
                         elif permissions and not user.has_perms(permissions):
@@ -188,12 +205,12 @@ try:
 
                     # handle ack
                     if message_data.ack:
-                        if type(result) is AsyncMessage:
+                        if type(result) is LongRunningTask:
                             result.on_result = _handle_result
                         else:
                             _handle_result(result)
 
-                    if type(result) is AsyncMessage:
+                    if type(result) is LongRunningTask:
                         result.run()
 
                     return result
