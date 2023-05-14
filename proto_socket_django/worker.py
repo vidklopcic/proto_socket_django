@@ -58,9 +58,12 @@ class SyncWorker:
 
 
 class AsyncWorker:
-    task_queue: asyncio.Queue[LongRunningTask] = asyncio.Queue()
+    task_queue: asyncio.Queue[LongRunningTask] = None
 
     def __init__(self):
+        if self.task_queue is not None:
+            raise Exception('AsyncWorker already initialized')
+        self.task_queue = asyncio.Queue()
         self.thread = threading.Thread(target=self._start)
         self.thread.setDaemon(True)
         self.thread.start()

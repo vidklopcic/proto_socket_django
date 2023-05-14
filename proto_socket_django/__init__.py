@@ -33,7 +33,7 @@ try:
 
                 for i in range(getattr(settings, 'PSD_N_SYNC_WORKERS', 0)):
                     print('starting sync worker', i)
-                    ApiWebsocketConsumer.sync_workers.append(AsyncWorker())
+                    ApiWebsocketConsumer.sync_workers.append(SyncWorker())
 
             if getattr(settings, 'PSD_RUN_ASYNC_WORKER', True) and ApiWebsocketConsumer.async_worker is None:
                 print('starting async worker')
@@ -42,11 +42,10 @@ try:
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
 
-            ApiWebsocketConsumer.static_init()
-
             self.receiver_instances = {}
             self.registered_groups = []
             self.user = None
+            self.token = None
             self.handlers: Dict[str, List[Callable]] = {}
 
             # register all receivers
@@ -72,13 +71,29 @@ try:
         def connect(self):
             self.accept()
 
+        def authenticate(self):
+            from authentication.models import Token
+            self.user = Token.authenticate(self.token)
+            if self.user:
+                self.on_authenticated()
+            else:
+                self.send_message(pb.TxTokenInvalid())
+                return
+
         def receive_json(self, json_data, **kwargs):
             if settings.DEBUG:
                 print('rx:', json_data)
             data = pb.RxMessageData(json_data)
 
+            if data.authHeader != self.token and data.authHeader:
+                self.token = data.authHeader
+                self.authenticate()
+
             for handler in self.handlers.get(data.type, []):
                 handler(data, self.user)
+
+        def on_authenticated(self):
+            pass
 
         def broadcast_message(self, event):
             self.send_json(event['event'])
@@ -109,7 +124,6 @@ try:
 
         @classmethod
         def continue_async(cls, handler: Callable[[Any], Union[Any, None]], *args, **kwargs):
-            cls.static_init()
             is_coroutine = inspect.iscoroutinefunction(handler)
             if not is_coroutine and not cls.sync_workers:
                 raise Exception('No sync workers. Is PSD_N_ASYNC_WORKERS > 0 and consumer set-up?')
@@ -330,4 +344,5 @@ try:
 
     betterproto.Message.to_dict = to_dict_patch
 except:
+    traceback.print_exc()
     pass
