@@ -47,7 +47,6 @@ try:
             self.receiver_instances = {}
             self.registered_groups = []
             self.user = None
-            self.token = None
             self.handlers: Dict[str, List[Callable]] = {}
 
             # register all receivers
@@ -73,29 +72,13 @@ try:
         def connect(self):
             self.accept()
 
-        def authenticate(self):
-            from authentication.models import Token
-            self.user = Token.authenticate(self.token)
-            if self.user:
-                self.on_authenticated()
-            else:
-                self.send_message(pb.TxTokenInvalid())
-                return
-
         def receive_json(self, json_data, **kwargs):
             if settings.DEBUG:
                 print('rx:', json_data)
             data = pb.RxMessageData(json_data)
 
-            if data.authHeader != self.token and data.authHeader:
-                self.token = data.authHeader
-                self.authenticate()
-
             for handler in self.handlers.get(data.type, []):
                 handler(data, self.user)
-
-        def on_authenticated(self):
-            pass
 
         def broadcast_message(self, event):
             self.send_json(event['event'])
