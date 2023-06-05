@@ -21,7 +21,7 @@ class LongRunningTask:
 
 
 class SyncWorker:
-    task_queue: queue.Queue[LongRunningTask] = queue.Queue()
+    task_queue: queue.Queue = queue.Queue()
 
     def __init__(self):
         self.thread = threading.Thread(target=self.runner)
