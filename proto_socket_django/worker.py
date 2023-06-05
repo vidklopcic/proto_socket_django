@@ -58,7 +58,7 @@ class SyncWorker:
 
 
 class AsyncWorker:
-    task_queue: asyncio.Queue[LongRunningTask] = None
+    task_queue: asyncio.Queue = None
 
     def __init__(self):
         if self.task_queue is not None:
