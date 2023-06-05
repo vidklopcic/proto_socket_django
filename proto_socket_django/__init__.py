@@ -307,7 +307,7 @@ try:
                     if getattr(v, '_serialized_on_wire', False) or include_default_values:
                         output[cased_name] = v.to_dict(casing, include_default_values)
             elif meta.proto_type == "map":
-                for k in v:
+                for k in (v or dict()):
                     if hasattr(v[k], "to_dict"):
                         v[k] = v[k].to_dict(casing, include_default_values)
 
