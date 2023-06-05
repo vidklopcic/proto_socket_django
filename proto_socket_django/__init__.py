@@ -343,6 +343,7 @@ try:
 
 
     betterproto.Message.to_dict = to_dict_patch
+    default_app_config = 'proto_socket_django.apps.ApiConfig'
 except:
     traceback.print_exc()
     pass
