@@ -29,7 +29,7 @@ try:
             if ApiWebsocketConsumer.sync_workers is None:
                 ApiWebsocketConsumer.sync_workers = []
                 if hasattr(settings, 'PSD_N_ASYNC_WORKERS'):
-                    raise 'PSD_N_ASYNC_WORKERS renamed to PSD_N_SYNC_WORKERS'
+                    raise Exception('PSD_N_ASYNC_WORKERS renamed to PSD_N_SYNC_WORKERS')
 
                 for i in range(getattr(settings, 'PSD_N_SYNC_WORKERS', 0)):
                     print('starting sync worker', i)
