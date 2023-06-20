@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import sys
 import re
 from typing import List
@@ -96,7 +97,7 @@ class MessagesGenerator:
         return self.proto + ' (' + self.path + ')'
 
 
-def generate(protos: List[str], is_proto_socket_module=False):
+def generate(protos: List[str], is_proto_socket_module=False, proto_out='./src'):
     generators = []
     for f in protos:
         proto_content = open(f, 'r', encoding='utf-8').read()
@@ -113,7 +114,7 @@ def generate(protos: List[str], is_proto_socket_module=False):
     import_names = ', '.join(set([i.package for i in generators]))
     imports.add(f'import {{{import_names}}} from "./compiled";')
 
-    with open('./src/proto/messages.ts', 'w', encoding='utf-8') as f:
+    with open(os.path.join(proto_out, 'messages.ts'), 'w', encoding='utf-8') as f:
         f.write('\n'.join(imports))
 
         f.write('\n\nexport namespace proto {')
