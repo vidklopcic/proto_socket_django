@@ -44,9 +44,7 @@ try:
 
             self.receiver_instances = {}
             self.registered_groups = []
-            self.user = self.scope.get('user')
-            if getattr(self.user, 'id') is None:
-                self.user = None
+            self.user = None
             self.token = None
             self.handlers: Dict[str, List[Callable]] = {}
 
@@ -61,9 +59,6 @@ try:
                             self.handlers[mtype] = []
                         self.handlers[mtype].append(getattr(receiver_instance, member_name))
 
-            if self.user:
-                self.on_authenticated()
-
         def send_message(self, message: 'TxMessage'):
             json = message.get_message()
             if settings.DEBUG:
@@ -75,6 +70,13 @@ try:
 
         def connect(self):
             self.accept()
+
+            self.user = self.scope.get('user')
+            if getattr(self.user, 'id') is None:
+                self.user = None
+
+            if self.user:
+                self.on_authenticated()
 
         def authenticate(self):
             from authentication.models import Token
