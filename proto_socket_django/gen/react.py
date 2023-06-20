@@ -5,6 +5,7 @@ import json
 from . import get_protos, delete_existing
 from .platforms.react.messages_generator import generate
 
+
 if not os.path.isfile('fps_config.json') or not os.path.isfile('package.json'):
     print('Run the command from react project root, containing fps_config.json and package.json.')
     sys.exit(1)

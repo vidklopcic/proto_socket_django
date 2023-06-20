@@ -1,14 +1,14 @@
-import inspect
 import traceback
 
 try:
     import betterproto
+    import inspect
     import abc
     import datetime
     import json
     from typing import Union, Type, Dict, List, Callable, Optional, Any
     from uuid import UUID
-    import pytz
+    import zoneinfo
     from asgiref.sync import async_to_sync
     from channels.generic.websocket import JsonWebsocketConsumer
     from channels.layers import get_channel_layer
@@ -44,7 +44,9 @@ try:
 
             self.receiver_instances = {}
             self.registered_groups = []
-            self.user = None
+            self.user = self.scope.get('user')
+            if getattr(self.user, 'id') is None:
+                self.user = None
             self.token = None
             self.handlers: Dict[str, List[Callable]] = {}
 
@@ -58,6 +60,9 @@ try:
                         if mtype not in self.handlers:
                             self.handlers[mtype] = []
                         self.handlers[mtype].append(getattr(receiver_instance, member_name))
+
+            if self.user:
+                self.on_authenticated()
 
         def send_message(self, message: 'TxMessage'):
             json = message.get_message()
@@ -226,23 +231,6 @@ try:
         return _receive
 
 
-    class ApiHttpConsumer(ApiWebsocketConsumer):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self.request = None
-            self.result: List[Dict] = []
-
-        def send_json(self, content, close=False):
-            self.result.append(self.encode_json(content))
-
-        def collect_result(self):
-            result = self.encode_json({
-                'messages': self.result
-            })
-            self.result.clear()
-            return result
-
-
     def generate_proto(f):
         return f
 
@@ -258,7 +246,7 @@ try:
     def from_timestamp(ts) -> Optional[timezone.datetime]:
         if ts is None:
             return None
-        return timezone.datetime.fromtimestamp(ts / 1000, tz=pytz.utc)
+        return timezone.datetime.fromtimestamp(ts / 1000, tz=zoneinfo.ZoneInfo('UTC'))
 
 
     class UUIDEncoder(json.JSONEncoder):
@@ -345,5 +333,5 @@ try:
     betterproto.Message.to_dict = to_dict_patch
     default_app_config = 'proto_socket_django.apps.ApiConfig'
 except:
-    traceback.print_exc()
-    pass
+    if __name__ != '__main__':
+        traceback.print_exc()
