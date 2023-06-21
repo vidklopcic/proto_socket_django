@@ -6,8 +6,7 @@ class ProtoSerializer(abc.ABC):
     tx: TxMessage
 
     def __new__(cls, *args, **kwargs):
-        if hasattr(cls, 'tx'):
-            cls.tx.proto()  # hack to set original vars() to current module (not really sure why it fails otherwise)
+        cls.__module__ = cls.__bases__[0].__module__
         return super().__new__(cls)
 
     def msg(self):
