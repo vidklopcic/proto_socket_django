@@ -19,6 +19,28 @@ try:
     from proto_socket_django.worker import SyncWorker, AsyncWorker, LongRunningTask
 
 
+    class ConsumerProxy:
+        def __init__(self, original, uuid: str):
+            self.original = original
+            self.uuid = uuid
+
+        def __getattr__(self, name):
+            return getattr(self.original, name)
+
+        def send_message(self, message: 'TxMessage'):
+            print('sending proxied message', message)
+            self.original.send_message(message, self.uuid)
+
+
+    class ReceiverProxy:
+        def __init__(self, original, uuid: str):
+            self.original = original
+            self.consumer = ConsumerProxy(original.consumer, uuid)
+
+        def __getattr__(self, name):
+            return getattr(self.original, name)
+
+
     class ApiWebsocketConsumer(JsonWebsocketConsumer):
         receivers: List[Type['FPSReceiver']] = []
         sync_workers: List['SyncWorker'] = None
@@ -59,8 +81,10 @@ try:
                             self.handlers[mtype] = []
                         self.handlers[mtype].append(getattr(receiver_instance, member_name))
 
-        def send_message(self, message: 'TxMessage'):
+        def send_message(self, message: 'TxMessage', uuid: Optional[str] = None):
             json = message.get_message()
+            if uuid is not None:
+                json['headers']['uuid'] = uuid
             if settings.DEBUG:
                 print('tx:', json)
             self.send_json(json)
@@ -97,7 +121,7 @@ try:
                 self.authenticate()
 
             for handler in self.handlers.get(data.type, []):
-                handler(data, self.user)
+                handler.__func__(ReceiverProxy(handler.__self__, data.uuid), data, self.user)
 
         def on_authenticated(self):
             pass
