@@ -34,7 +34,6 @@ try:
             return attr
 
         def send_message(self, message: 'TxMessage'):
-            print('sending proxied message', message)
             self.original.send_message(message, self.uuid)
 
 
