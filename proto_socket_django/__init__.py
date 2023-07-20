@@ -25,7 +25,13 @@ try:
             self.uuid = uuid
 
         def __getattr__(self, name):
-            return getattr(self.original, name)
+            attr = getattr(self.original, name)
+            if callable(attr) and inspect.ismethod(attr):
+                def method(_self, *args, **kwargs):
+                    return attr.__func__(self, *args, **kwargs)
+
+                return method
+            return attr
 
         def send_message(self, message: 'TxMessage'):
             print('sending proxied message', message)
@@ -38,7 +44,13 @@ try:
             self.consumer = ConsumerProxy(original.consumer, uuid)
 
         def __getattr__(self, name):
-            return getattr(self.original, name)
+            attr = getattr(self.original, name)
+            if callable(attr) and inspect.ismethod(attr):
+                def method(_self, *args, **kwargs):
+                    return attr.__func__(self, *args, **kwargs)
+
+                return method
+            return attr
 
 
     class ApiWebsocketConsumer(JsonWebsocketConsumer):
