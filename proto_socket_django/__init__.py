@@ -1,4 +1,8 @@
+import dataclasses
 import traceback
+from base64 import b64decode
+
+from betterproto import safe_snake_case
 
 try:
     import betterproto
@@ -294,6 +298,67 @@ try:
             return json.JSONEncoder.default(self, obj)
 
 
+    def from_dict_patch(self, value: dict):
+        """
+        Parse the key/value pairs in `value` into this message instance. This
+        returns the instance itself and is therefore assignable and chainable.
+        """
+        self._serialized_on_wire = True
+        fields_by_name = {f.name: f for f in dataclasses.fields(self)}
+        for key in value:
+            snake_cased = safe_snake_case(key)
+            if snake_cased in fields_by_name:
+                field = fields_by_name[snake_cased]
+                meta = betterproto.FieldMetadata.get(field)
+
+                if value[key] is not None:
+                    if meta.proto_type == "message":
+                        v = getattr(self, field.name)
+                        if isinstance(v, list):
+                            cls = self._betterproto.cls_by_field[field.name]
+                            for i in range(len(value[key])):
+                                v.append(cls().from_dict(value[key][i]))
+                        elif isinstance(v, datetime.datetime):
+                            v = datetime.datetime.fromisoformat(
+                                value[key].replace("Z", "+00:00")
+                            )
+                            setattr(self, field.name, v)
+                        elif isinstance(v, datetime.timedelta):
+                            v = datetime.timedelta(seconds=float(value[key][:-1]))
+                            setattr(self, field.name, v)
+                        elif meta.wraps:
+                            setattr(self, field.name, value[key])
+                        else:
+                            v.from_dict(value[key])
+                    elif meta.map_types and meta.map_types[1] == betterproto.TYPE_MESSAGE:
+                        v = getattr(self, field.name) or {}
+                        cls = self._betterproto.cls_by_field[field.name + ".value"]
+                        for k in value[key]:
+                            v[k] = cls().from_dict(value[key][k])
+                    else:
+                        v = value[key]
+                        if meta.proto_type in betterproto.INT_64_TYPES:
+                            if isinstance(value[key], list):
+                                v = [int(n) for n in value[key]]
+                            else:
+                                v = int(value[key])
+                        elif meta.proto_type == betterproto.TYPE_BYTES:
+                            if isinstance(value[key], list):
+                                v = [b64decode(n) for n in value[key]]
+                            else:
+                                v = b64decode(value[key])
+                        elif meta.proto_type == betterproto.TYPE_ENUM:
+                            enum_cls = self._betterproto.cls_by_field[field.name]
+                            if isinstance(v, list):
+                                v = [enum_cls.from_string(e) for e in v]
+                            elif isinstance(v, str):
+                                v = enum_cls.from_string(v)
+
+                        if v is not None:
+                            setattr(self, field.name, v)
+        return self
+
+
     def to_dict_patch(self, casing: betterproto.Casing = betterproto.Casing.CAMEL,
                       include_default_values: bool = False) -> dict:
         """
@@ -368,6 +433,7 @@ try:
 
 
     betterproto.Message.to_dict = to_dict_patch
+    betterproto.Message.from_dict = from_dict_patch
     default_app_config = 'proto_socket_django.apps.ApiConfig'
 except:
     if __name__ != '__main__':
