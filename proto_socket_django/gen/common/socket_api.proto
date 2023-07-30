@@ -9,7 +9,6 @@ origin = server
 message Ack {
   string uuid = 1;
   string error_message = 2;
-  string async_progress_key = 3;
   int32 error_code = 4;
 }
 
@@ -23,6 +22,7 @@ message AsyncProgress {
   string info = 3;
   bool done = 4;
   string error_message = 5;
+  int32 error_code = 6;
 }
 
 /*
