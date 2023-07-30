@@ -32,3 +32,8 @@ origin = server
 message UpgradeApiVersion {
   int32 latest = 1;
 }
+
+enum AckErrorCode {
+  error_code_none = 0;
+  error_code_unauthorized = 401;
+}
