@@ -3,8 +3,11 @@ import traceback
 from base64 import b64decode
 
 from betterproto import safe_snake_case
+from django.contrib.auth import get_user_model
 
 try:
+    from rest_framework_simplejwt.tokens import RefreshToken
+    from rest_framework_simplejwt.state import token_backend
     import betterproto
     import inspect
     import abc
@@ -117,9 +120,41 @@ try:
             if self.user:
                 self.on_authenticated()
 
+        # todo - refactor
+        def refresh_token(self, refresh_token: str):
+            try:
+                from authentication import refresh
+                refresh(self)
+            except:
+                try:
+                    refresh = RefreshToken(refresh_token)
+                    refresh.set_jti()
+                    refresh.set_exp()
+                    refresh.set_iat()
+                    self.token = str(refresh.access_token)
+                    self.authenticate()
+                    self.send_message(pb.TxLoginToken(pb.TxLoginToken.proto(
+                        token=str(refresh.access_token),
+                        refresh=str(refresh),
+                    )))
+                except:
+                    traceback.print_exc()
+                    self.send_message(pb.TxRefreshTokenInvalid())
+
         def authenticate(self):
-            from authentication.models import Token
-            self.user = Token.authenticate(self.token)
+            try:
+                from authentication import authenticate
+            except:
+                def authenticate(self):
+                    try:
+                        valid_data = token_backend.decode(self.token)
+                        assert valid_data['token_type'] == 'access'
+                        return get_user_model().objects.filter(pk=valid_data['user_id']).first()
+                    except:
+                        traceback.print_exc()
+                        return None
+
+            self.user = authenticate(self)
             if self.user:
                 self.on_authenticated()
             else:
@@ -134,6 +169,10 @@ try:
             if data.authHeader != self.token and data.authHeader:
                 self.token = data.authHeader
                 self.authenticate()
+
+            # todo - refactor
+            if data.type == 'refresh-token':
+                self.refresh_token(data.body['refresh_token'])
 
             for handler in self.handlers.get(data.type, []):
                 handler.__func__(ReceiverProxy(handler.__self__, data.uuid), data, self.user)

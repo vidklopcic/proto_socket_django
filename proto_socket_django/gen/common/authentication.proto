@@ -51,3 +51,10 @@ origin = server
  */
 message TokenInvalid {
 }
+
+/*
+type = 'refresh-token-invalid'
+origin = server
+ */
+message RefreshTokenInvalid {
+}

@@ -3,3 +3,4 @@ django
 betterproto==1.2.5
 protobuf==3.14.0
 redis
+djangorestframework-simplejwt==5.2.2
