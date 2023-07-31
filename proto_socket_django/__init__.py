@@ -6,8 +6,6 @@ from betterproto import safe_snake_case
 from django.contrib.auth import get_user_model
 
 try:
-    from rest_framework_simplejwt.tokens import RefreshToken
-    from rest_framework_simplejwt.state import token_backend
     import betterproto
     import inspect
     import abc
@@ -122,6 +120,7 @@ try:
 
         # todo - refactor
         def refresh_token(self, refresh_token: str):
+            from rest_framework_simplejwt.tokens import RefreshToken
             try:
                 from authentication import refresh
                 refresh(self)
@@ -146,6 +145,7 @@ try:
                 from authentication import authenticate
             except:
                 def authenticate(self):
+                    from rest_framework_simplejwt.state import token_backend
                     try:
                         valid_data = token_backend.decode(self.token)
                         assert valid_data['token_type'] == 'access'

@@ -2,8 +2,11 @@ import json
 import traceback
 
 from django.http import HttpResponse
+from rest_framework_simplejwt.tokens import AccessToken
 
-from proto_socket_django import ApiHttpConsumer
+
+def auth_header(request):
+    return HttpResponse(AccessToken.for_user(request.user).token)
 
 
 def psd_endpoint(consumer: ApiHttpConsumer):
