@@ -4,6 +4,6 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 def auth_header(request):
     if request.user:
-        return HttpResponse(AccessToken.for_user(request.user).token)
+        return HttpResponse(str(AccessToken.for_user(request.user)))
     else:
         return HttpResponse(status=401)
