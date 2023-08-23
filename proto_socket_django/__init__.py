@@ -23,40 +23,6 @@ try:
     from django.conf import settings
     from proto_socket_django.worker import SyncWorker, AsyncWorker, LongRunningTask
 
-
-    class ConsumerProxy:
-        def __init__(self, original, uuid: str):
-            self.original = original
-            self.uuid = uuid
-
-        def __getattr__(self, name):
-            attr = getattr(self.original, name)
-            if callable(attr) and inspect.ismethod(attr):
-                def method(*args, **kwargs):
-                    return attr.__func__(self, *args, **kwargs)
-
-                return method
-            return attr
-
-        def send_message(self, message: 'TxMessage'):
-            self.original.send_message(message, self.uuid)
-
-
-    class ReceiverProxy:
-        def __init__(self, original, uuid: str):
-            self.original = original
-            self.consumer = ConsumerProxy(original.consumer, uuid)
-
-        def __getattr__(self, name):
-            attr = getattr(self.original, name)
-            if callable(attr) and inspect.ismethod(attr):
-                def method(*args, **kwargs):
-                    return attr.__func__(self, *args, **kwargs)
-
-                return method
-            return attr
-
-
     class ApiWebsocketConsumer(JsonWebsocketConsumer):
         receivers: List[Type['FPSReceiver']] = []
         sync_workers: List['SyncWorker'] = None
@@ -469,6 +435,41 @@ try:
                 else:
                     output[cased_name] = v
         return output
+
+
+    class ConsumerProxy(ApiWebsocketConsumer):
+        # noinspection PyMissingConstructor
+        def __init__(self, original, uuid: str):
+            self.original = original
+            self.uuid = uuid
+
+        def __getattr__(self, name):
+            attr = getattr(self.original, name)
+            if callable(attr) and inspect.ismethod(attr):
+                def method(*args, **kwargs):
+                    return attr.__func__(self, *args, **kwargs)
+
+                return method
+            return attr
+
+        def send_message(self, message: 'TxMessage', uuid: Optional[str] = None):
+            self.original.send_message(message, uuid or self.uuid)
+
+
+    class ReceiverProxy(FPSReceiver):
+        # noinspection PyMissingConstructor
+        def __init__(self, original, uuid: str):
+            self.original = original
+            self.consumer = ConsumerProxy(original.consumer, uuid)
+
+        def __getattr__(self, name):
+            attr = getattr(self.original, name)
+            if callable(attr) and inspect.ismethod(attr):
+                def method(*args, **kwargs):
+                    return attr.__func__(self, *args, **kwargs)
+
+                return method
+            return attr
 
 
     betterproto.Message.to_dict = to_dict_patch
