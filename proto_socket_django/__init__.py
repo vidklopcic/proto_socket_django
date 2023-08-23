@@ -32,7 +32,7 @@ try:
         def __getattr__(self, name):
             attr = getattr(self.original, name)
             if callable(attr) and inspect.ismethod(attr):
-                def method(_self, *args, **kwargs):
+                def method(*args, **kwargs):
                     return attr.__func__(self, *args, **kwargs)
 
                 return method
@@ -50,7 +50,7 @@ try:
         def __getattr__(self, name):
             attr = getattr(self.original, name)
             if callable(attr) and inspect.ismethod(attr):
-                def method(_self, *args, **kwargs):
+                def method(*args, **kwargs):
                     return attr.__func__(self, *args, **kwargs)
 
                 return method
