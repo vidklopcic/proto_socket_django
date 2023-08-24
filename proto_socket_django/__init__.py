@@ -437,7 +437,7 @@ try:
         return output
 
 
-    class ConsumerProxy(ApiWebsocketConsumer):
+    class ConsumerProxy:
         # noinspection PyMissingConstructor
         def __init__(self, original, uuid: str):
             self.original = original
@@ -456,7 +456,7 @@ try:
             self.original.send_message(message, uuid or self.uuid)
 
 
-    class ReceiverProxy(FPSReceiver):
+    class ReceiverProxy:
         # noinspection PyMissingConstructor
         def __init__(self, original, uuid: str):
             self.original = original
