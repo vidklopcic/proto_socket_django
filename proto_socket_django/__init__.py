@@ -359,8 +359,8 @@ try:
                             elif isinstance(v, str):
                                 v = enum_cls.from_string(v)
 
-                        if v is not None:
-                            setattr(self, field.name, v)
+                    if v is not None:
+                        setattr(self, field.name, v)
         return self
 
 
