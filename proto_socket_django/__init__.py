@@ -340,6 +340,7 @@ try:
                         cls = self._betterproto.cls_by_field[field.name + ".value"]
                         for k in value[key]:
                             v[k] = cls().from_dict(value[key][k])
+                        setattr(self, field.name, v)
                     else:
                         v = value[key]
                         if meta.proto_type in betterproto.INT_64_TYPES:
@@ -359,8 +360,8 @@ try:
                             elif isinstance(v, str):
                                 v = enum_cls.from_string(v)
 
-                    if v is not None:
-                        setattr(self, field.name, v)
+                        if v is not None:
+                            setattr(self, field.name, v)
         return self
 
 
