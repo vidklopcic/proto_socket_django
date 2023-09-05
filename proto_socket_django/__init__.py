@@ -188,7 +188,7 @@ try:
                 args=args,
                 kwargs=kwargs,
                 run=lambda: queue.put(task),
-                is_coroutine=is_coroutine
+                is_coroutine=is_coroutine,
             )
             return task
 
@@ -255,6 +255,7 @@ try:
                     if message_data.ack:
                         if type(result) is LongRunningTask:
                             result.on_result = _handle_result
+                            result.ack = message_data.ack
                         else:
                             _handle_result(result)
 

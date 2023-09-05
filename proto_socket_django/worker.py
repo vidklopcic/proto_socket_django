@@ -4,11 +4,11 @@ import traceback
 from sqlite3 import InterfaceError
 from typing import Callable, Any, List, Union, Type, Dict, Tuple
 from attr import dataclass
+from django.conf import settings
 from proto.messages import RxMessage
 from django.db import connections
 import queue
 import asyncio
-
 
 @dataclass
 class LongRunningTask:
@@ -18,6 +18,7 @@ class LongRunningTask:
     run: Callable[[], None]
     on_result: Union[Callable[[Union[None, 'proto_socket_django.FPSReceiverError']], None], None] = None
     is_coroutine: bool = False
+    ack: bool = False
 
 
 class SyncWorker:
@@ -39,6 +40,9 @@ class SyncWorker:
             traceback.print_exc()
 
     def runner(self):
+        forward_exceptions = getattr(settings, 'PSD_FORWARD_EXCEPTIONS', False)
+        format_exception = getattr(settings, 'PSD_EXCEPTION_FORMATTER', lambda e: str(e))
+
         while True:
             async_message = self.task_queue.get()
             self.check_db()
@@ -53,7 +57,12 @@ class SyncWorker:
                 self.thread.setDaemon(True)
                 self.thread.start()
                 return
-            except:
+            except Exception as e:
+                from proto_socket_django import FPSReceiverError
+                if forward_exceptions and async_message.ack:
+                    async_message.on_result(FPSReceiverError(format_exception(e)))
+                elif not forward_exceptions:
+                    raise
                 traceback.print_exc()
 
 
@@ -85,6 +94,8 @@ class AsyncWorker:
         self.loop.run_until_complete(self.runner())
 
     async def runner(self):
+        forward_exceptions = getattr(settings, 'PSD_FORWARD_EXCEPTIONS', False)
+        format_exception = getattr(settings, 'PSD_EXCEPTION_FORMATTER', lambda e: str(e))
         while True:
             async_task = await self.task_queue.get()
             self.check_db()
@@ -99,5 +110,10 @@ class AsyncWorker:
                 self.thread.setDaemon(True)
                 self.thread.start()
                 return
-            except:
+            except Exception as e:
+                from proto_socket_django import FPSReceiverError
+                if forward_exceptions and async_task.ack:
+                    async_task.on_result(FPSReceiverError(format_exception(e)))
+                elif not forward_exceptions:
+                    raise
                 traceback.print_exc()
