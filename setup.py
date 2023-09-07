@@ -25,5 +25,6 @@ setup(
     license='MIT',
     install_requires=[
         'Django>=2.1',
+        'rest_framework_simplejwt'
     ]
 )
