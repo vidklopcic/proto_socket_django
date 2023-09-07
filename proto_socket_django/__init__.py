@@ -78,7 +78,7 @@ try:
             self.accept()
 
             self.user = self.scope.get('user')
-            if getattr(self.user, 'id') is None:
+            if getattr(self.user, 'id', None) is None:
                 self.user = None
 
             if self.user:
