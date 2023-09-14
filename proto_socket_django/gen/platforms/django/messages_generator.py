@@ -54,6 +54,8 @@ def generate(protos: List[str]):
         imports.add(f'from proto.{os.path.splitext(os.path.basename(f))[0]} import *')
         generators += [MessagesGenerator(f, i[0], i[1]) for i in get_psd_messages(proto_content)]
 
+    generators = sorted(generators, key=lambda x: x.proto)
+
     with open('proto/messages.py', 'w', encoding='utf-8') as f:
         f.write('\n'.join(imports))
         f.write(templates.boilerplate)

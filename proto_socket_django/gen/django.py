@@ -15,6 +15,16 @@ def main():
     proto_out = 'proto'
     delete_existing(proto_out)
     proto_path, protos = get_protos(json.load(open('fps_config.json')), '-I')
+
+    def remove_venv_from_path():
+        venv_path = os.getenv('VIRTUAL_ENV')
+        if venv_path:
+            paths = os.getenv('PATH').split(os.pathsep)
+            paths = [p for p in paths if venv_path not in p]
+            new_path = os.pathsep.join(paths)
+            os.environ['PATH'] = new_path
+
+    remove_venv_from_path()
     subprocess.run(f'protoc {proto_path} --python_betterproto_out={proto_out} {" ".join(protos)}', shell=True)
     generate(protos)
 
