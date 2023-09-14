@@ -15,6 +15,11 @@ def for_react():
 
 def for_django():
     import pip
+    try:
+        import betterproto
+        return  # already installed
+    except ImportError:
+        pass
     if os.geteuid() != 0:
         result = input('Installing "betterproto[compiler]" without sudo privileges. If this is a global installation '
                        '"protoc-gen-python_betterproto" binary won\'t be added to the system path. Continue? [y/N]')
@@ -33,7 +38,7 @@ def protoc():
     elif sys.platform == 'linux':
         if os.geteuid() != 0:
             raise Exception('Cannot install protoc without sudo privileges (sudo apt install protobuf-compiler).')
-        subprocess.check_output(['sudo', 'apt', 'install', '-y', 'protobuf-compiler'])
+        subprocess.check_output(['apt', 'install', '-y', 'protobuf-compiler'])
     else:
         raise NotImplementedError('for now, protoc installation is only supported on OSX using Homebrew')
 
