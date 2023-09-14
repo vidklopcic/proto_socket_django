@@ -1,10 +1,11 @@
 import dataclasses
+import sys
 import traceback
 from base64 import b64decode
 from betterproto import safe_snake_case
 from django.contrib.auth import get_user_model
 
-if __name__ != 'proto_socket_django':
+if '-m' not in sys.argv:
     import betterproto
     import inspect
     import abc
