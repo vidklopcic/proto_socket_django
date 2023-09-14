@@ -17,7 +17,7 @@ if __name__ != 'proto_socket_django':
     from channels.generic.websocket import JsonWebsocketConsumer
     from channels.layers import get_channel_layer
     from django.utils import timezone
-    from proto.messages import TxMessage, RxMessage
+    from proto.messages import TxMessage
     import proto.messages as pb
     from django.conf import settings
     from proto_socket_django.worker import SyncWorker, AsyncWorker, LongRunningTask

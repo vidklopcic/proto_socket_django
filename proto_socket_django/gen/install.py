@@ -5,12 +5,17 @@ import sys
 import traceback
 
 
+def run_as_user(command):
+    user = os.getenv('SUDO_USER', os.getenv('USER'))
+    return subprocess.check_output(['sudo', '-u', user] + command)
+
+
 def for_flutter():
-    subprocess.check_output(['dart', 'pub', 'global', 'activate', 'protoc_plugin'])
+    run_as_user(['dart', 'pub', 'global', 'activate', 'protoc_plugin'])
 
 
 def for_react():
-    subprocess.check_output(['npm', 'install', '--global', 'protobufjs'])
+    run_as_user(['npm', 'install', '--global', 'protobufjs'])
 
 
 def for_django():
@@ -20,33 +25,30 @@ def for_django():
         return  # already installed
     except ImportError:
         pass
-    if os.geteuid() != 0:
-        result = input('Installing "betterproto[compiler]" without sudo privileges. If this is a global installation '
-                       '"protoc-gen-python_betterproto" binary won\'t be added to the system path. Continue? [y/N]')
-        if result.strip() != 'y':
-            sys.exit(1)
-
-    pip.main(['install', 'betterproto[compiler]'])
+    pip.main(['install', 'betterproto[compiler]==1.2.5'])
 
 
 def protoc():
     if sys.platform == 'darwin':
         try:
-            subprocess.check_output(['brew', 'install', 'protobuf'])
+            run_as_user(['brew', 'install', 'protobuf'])
         except FileNotFoundError:
             raise FileNotFoundError('Homebrew must be installed first')
     elif sys.platform == 'linux':
-        if os.geteuid() != 0:
-            raise Exception('Cannot install protoc without sudo privileges (sudo apt install protobuf-compiler).')
         subprocess.check_output(['apt', 'install', '-y', 'protobuf-compiler'])
     else:
-        raise NotImplementedError('for now, protoc installation is only supported on OSX using Homebrew')
+        raise NotImplementedError(
+            'for now, protoc installation is only supported on OSX using Homebrew and on Linux using apt.'
+        )
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Install / check required dependencies for supported platforms (e.g., protobuf)')
     args = parser.parse_args()
+
+    if os.geteuid() != 0:
+        raise Exception('Script must be run as root (needed for protoc installation)')
 
     try:
         subprocess.check_output('protoc')
