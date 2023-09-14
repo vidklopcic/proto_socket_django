@@ -6,7 +6,7 @@ import traceback
 
 
 def for_flutter():
-    subprocess.check_output(['pub', 'global', 'activate', 'protoc_plugin'])
+    subprocess.check_output(['dart', 'pub', 'global', 'activate', 'protoc_plugin'])
 
 
 def for_react():
