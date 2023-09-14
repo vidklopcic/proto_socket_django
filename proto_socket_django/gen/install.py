@@ -2,10 +2,11 @@ import argparse
 import os
 import subprocess
 import sys
+import traceback
 
 
 def for_flutter():
-    pass
+    subprocess.check_output(['pub', 'global', 'activate', 'protoc_plugin'])
 
 
 def for_react():
@@ -29,6 +30,10 @@ def protoc():
             subprocess.check_output(['brew', 'install', 'protobuf'])
         except FileNotFoundError:
             raise FileNotFoundError('Homebrew must be installed first')
+    elif sys.platform == 'linux':
+        if os.geteuid() != 0:
+            raise Exception('Cannot install protoc without sudo privileges (sudo apt install protobuf-compiler).')
+        subprocess.check_output(['sudo', 'apt', 'install', '-y', 'protobuf-compiler'])
     else:
         raise NotImplementedError('for now, protoc installation is only supported on OSX using Homebrew')
 
@@ -36,21 +41,35 @@ def protoc():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Install / check required dependencies for supported platforms (e.g., protobuf)')
-    parser.add_argument('--protoc')
-    parser.add_argument('--platforms', type=str, default='flutter,react,django')
     args = parser.parse_args()
-
-    if args.protoc:
-        protoc()
 
     try:
         subprocess.check_output('protoc')
     except FileNotFoundError:
-        raise FileNotFoundError('protoc must be installed first')
+        print('===== Installing protoc =====')
+        try:
+            protoc()
+        except:
+            traceback.print_exc()
+            print('Failed to install protoc')
 
-    if args.platforms:
-        for platform in [p.strip() for p in args.platforms.split(',')]:
-            try:
-                exec(f'for_{platform}()')
-            except NameError as e:
-                print('platform', platform, 'is not supported')
+    print('===== Installing protoc_plugin for flutter =====')
+    try:
+        for_flutter()
+    except:
+        traceback.print_exc()
+        print('Failed to install protoc_plugin for flutter')
+
+    print('===== Installing protobufjs for react =====')
+    try:
+        for_react()
+    except:
+        traceback.print_exc()
+        print('Failed to install protobufjs for react')
+
+    print('===== Installing betterproto[compiler] for django =====')
+    try:
+        for_django()
+    except:
+        traceback.print_exc()
+        print('Failed to install betterproto[compiler] for django')

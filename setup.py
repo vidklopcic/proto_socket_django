@@ -25,6 +25,8 @@ setup(
     license='MIT',
     install_requires=[
         'Django>=2.1',
-        'djangorestframework-simplejwt'
+        'djangorestframework-simplejwt>=5.3.0',
+        'betterproto==1.2.5',
+        'channels',
     ]
 )

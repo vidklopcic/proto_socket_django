@@ -1,11 +1,10 @@
 import dataclasses
 import traceback
 from base64 import b64decode
-
 from betterproto import safe_snake_case
 from django.contrib.auth import get_user_model
 
-try:
+if __name__ != 'proto_socket_django':
     import betterproto
     import inspect
     import abc
@@ -22,6 +21,7 @@ try:
     import proto.messages as pb
     from django.conf import settings
     from proto_socket_django.worker import SyncWorker, AsyncWorker, LongRunningTask
+
 
     class ApiWebsocketConsumer(JsonWebsocketConsumer):
         receivers: List[Type['FPSReceiver']] = []
@@ -477,6 +477,3 @@ try:
     betterproto.Message.to_dict = to_dict_patch
     betterproto.Message.from_dict = from_dict_patch
     default_app_config = 'proto_socket_django.apps.ApiConfig'
-except:
-    if __name__ != '__main__':
-        traceback.print_exc()

@@ -1,14 +1,14 @@
 import threading
 import time
 import traceback
+from dataclasses import dataclass
 from sqlite3 import InterfaceError
-from typing import Callable, Any, List, Union, Type, Dict, Tuple
-from attr import dataclass
+from typing import Callable, Union, Dict, Tuple
 from django.conf import settings
-from proto.messages import RxMessage
 from django.db import connections
 import queue
 import asyncio
+
 
 @dataclass
 class LongRunningTask:
