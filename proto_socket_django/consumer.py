@@ -1,4 +1,6 @@
 import traceback
+from uuid import UUID
+
 from django.contrib.auth import get_user_model
 import inspect
 import abc
@@ -272,3 +274,11 @@ class ReceiverProxy:
 
             return method
         return attr
+
+
+class UUIDEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, UUID):
+            # if the obj is uuid, we simply return the value of uuid
+            return str(obj)
+        return json.JSONEncoder.default(self, obj)

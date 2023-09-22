@@ -1,19 +1,8 @@
 import dataclasses
 import datetime
-import json
 from base64 import b64decode
-from uuid import UUID
 import betterproto
 from betterproto import safe_snake_case
-
-
-class UUIDEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, UUID):
-            # if the obj is uuid, we simply return the value of uuid
-            return str(obj)
-        return json.JSONEncoder.default(self, obj)
-
 
 def from_dict_patch(self, value: dict):
     """
