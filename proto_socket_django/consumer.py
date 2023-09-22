@@ -74,27 +74,6 @@ class ApiWebsocketConsumer(JsonWebsocketConsumer):
         if self.user:
             self.on_authenticated()
 
-    # todo - refactor
-    def refresh_token(self, refresh_token: str):
-        from rest_framework_simplejwt.tokens import RefreshToken
-        refresh = RefreshToken(refresh_token)
-        refresh.set_jti()
-        refresh.set_exp()
-        refresh.set_iat()
-        return str(refresh), str(refresh.access_token)
-
-    def _refresh_token(self, refresh_token: str):
-        try:
-            refresh_token, self.token = self.refresh_token(refresh_token)
-            self._authenticate()
-            self.send_message(pb.TxLoginToken(pb.TxLoginToken.proto(
-                token=self.token,
-                refresh=refresh_token,
-            )))
-        except:
-            traceback.print_exc()
-            self.send_message(pb.TxRefreshTokenInvalid())
-
     def authenticate(self):
         from rest_framework_simplejwt.state import token_backend
         try:
@@ -121,10 +100,6 @@ class ApiWebsocketConsumer(JsonWebsocketConsumer):
         if data.authHeader != self.token and data.authHeader:
             self.token = data.authHeader
             self._authenticate()
-
-        # todo - refactor
-        if data.type == 'refresh-token':
-            self._refresh_token(data.body['refresh_token'])
 
         for handler in self.handlers.get(data.type, []):
             handler.__func__(ReceiverProxy(handler.__self__, data.uuid), data, self.user)
@@ -262,6 +237,7 @@ def receive(permissions: List[str] = None, auth: bool = None, whitelist_groups: 
         return wrapper
 
     return _receive
+
 
 class ConsumerProxy:
     # noinspection PyMissingConstructor

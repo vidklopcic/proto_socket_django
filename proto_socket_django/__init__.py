@@ -1,9 +1,9 @@
 import sys
 
 if '-m' not in sys.argv:
-    import betterproto_patch
     import proto.messages as pb
-    import api_models as api_models
-    from consumer import ApiWebsocketConsumer
-    import utils
-    from serializers import ProtoSerializer
+    from . import betterproto_patch
+    from . import api_models as api_models
+    from .consumer import *
+    from . import utils
+    from .serializers import ProtoSerializer

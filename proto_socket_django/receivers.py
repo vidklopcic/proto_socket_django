@@ -27,6 +27,9 @@ class AuthenticationReceiver(psd.FPSReceiver):
     def refresh_token(self, message: pb.RxRefreshToken):
         try:
             refresh = RefreshToken(message.proto.refresh_token)
+            refresh.set_jti()
+            refresh.set_exp()
+            refresh.set_iat()
             message = pb.TxLoginToken(pb.TxLoginToken.proto(
                 token=str(refresh.access_token),
                 refresh=str(refresh),
