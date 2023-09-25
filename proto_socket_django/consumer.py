@@ -247,6 +247,12 @@ class ConsumerProxy:
         self.original = original
         self.uuid = uuid
 
+    def __setattr__(self, key, value):
+        if key in ['original', 'uuid']:
+            super().__setattr__(key, value)
+        else:
+            self.original.__setattr__(key, value)
+
     def __getattr__(self, name):
         attr = getattr(self.original, name)
         if callable(attr) and inspect.ismethod(attr):
@@ -265,6 +271,12 @@ class ReceiverProxy:
     def __init__(self, original, uuid: str):
         self.original = original
         self.consumer = ConsumerProxy(original.consumer, uuid)
+
+    def __setattr__(self, key, value):
+        if key in ['original', 'consumer']:
+            super().__setattr__(key, value)
+        else:
+            self.original.__setattr__(key, value)
 
     def __getattr__(self, name):
         attr = getattr(self.original, name)
