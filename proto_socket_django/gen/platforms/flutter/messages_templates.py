@@ -11,7 +11,7 @@ cache_keys_class = '''
 class {prefix}{proto}CacheKeys extends CacheKeys {{
   {fields}
 
-  const {prefix}{proto}CacheKeys() : super(textKeys: const [{text_keys}], realKeys: const [{real_keys}], dateKeys: const [{date_keys}]);
+  const {prefix}{proto}CacheKeys() : super(textKeys: const [{text_keys}], realKeys: const [{real_keys}], dateKeys: const [{date_keys}], intKeys: const [{int_keys}]);
 }}'''
 
 rx_message_class = '''class Rx{proto} extends SocketRxMessage{table_type} {{

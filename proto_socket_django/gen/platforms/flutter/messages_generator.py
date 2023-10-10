@@ -1,6 +1,7 @@
 import argparse
 import sys
 import re
+from dataclasses import dataclass
 from typing import List
 from proto_socket_django.gen.platforms.flutter import messages_templates as templates
 from proto_socket_django.gen.platforms import get_psd_messages
@@ -75,21 +76,24 @@ class MessagesGenerator:
 
         if re.search('client\s+cache_keys\s*=', self.spec):
             cache_keys = re.search('client\s+cache_keys\s*=(.+)', self.spec).group(1)
-            text_keys = []
-            real_keys = []
-            date_keys = []
 
-            if re.search('text\((.+?)\)', cache_keys):
-                text_keys = re.findall('\'(.+?)\'', re.search('text\((.+?)\)', cache_keys).group(1))
-            if re.search('real\((.+?)\)', cache_keys):
-                real_keys = re.findall('\'(.+?)\'', re.search('real\((.+?)\)', cache_keys).group(1))
-            if re.search('date\((.+?)\)', cache_keys):
-                date_keys = re.findall('\'(.+?)\'', re.search('date\((.+?)\)', cache_keys).group(1))
+            def find_keys(key_type: str):
+                if re.search(f'{key_type}\((.+?)\)', cache_keys):
+                    return re.findall('\'(.+?)\'', re.search(f'{key_type}\((.+?)\)', cache_keys).group(1))
+                return []
 
-            if text_keys or real_keys or date_keys:
+            text_keys = find_keys('text')
+            real_keys = find_keys('real')
+            date_keys = find_keys('date')
+            int_keys = find_keys('int')
+
+
+
+            if text_keys or real_keys or date_keys or int_keys:
                 text_keys = [to_camel_case(k) for k in text_keys]
                 real_keys = [to_camel_case(k) for k in real_keys]
                 date_keys = [to_camel_case(k) for k in date_keys]
+                int_keys = [to_camel_case(k) for k in int_keys]
                 common_fields.append(
                     '''final {prefix}{proto}CacheKeys cacheKeys = const {prefix}{proto}CacheKeys();'''.format(
                         prefix=self.get_client_prefix(), proto=self.proto
@@ -122,11 +126,16 @@ class MessagesGenerator:
                 for i, key in enumerate(date_keys):
                     add_key(i, key, 'date', 'DateTimeColumn')
 
+                for i, key in enumerate(int_keys):
+                    add_key(i, key, 'int', 'IntColumn')
+
+
                 cache_class = templates.cache_keys_class.format(
                     prefix=self.get_client_prefix(), proto=self.proto,
                     text_keys="'" + "', '".join(text_keys) + "'" if text_keys else '',
                     real_keys="'" + "', '".join(real_keys) + "'" if real_keys else '',
                     date_keys="'" + "', '".join(date_keys) + "'" if date_keys else '',
+                    int_keys="'" + "', '".join(int_keys) + "'" if int_keys else '',
                     fields='\n  '.join(cache_keys + cache_fields)
                 ) + '\n\n' + templates.cache_keys_table_class.format(
                     prefix=self.get_client_prefix(), proto=self.proto,
