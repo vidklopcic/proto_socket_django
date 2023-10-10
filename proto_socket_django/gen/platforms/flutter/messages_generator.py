@@ -95,50 +95,43 @@ class MessagesGenerator:
                         prefix=self.get_client_prefix(), proto=self.proto
                     )
                 )
+                rx_fields.append(
+                    f'late {self.get_client_prefix()}{self.proto}Table table;'
+                )
+                table_fields_initializers = []
+                table_fields = []
                 cache_fields = []
                 cache_keys = []
-                for i in range(len(text_keys)):
-                    text_key = text_keys[i]
+
+                def add_key(index: int, key: str, key_type: str, column: str):
                     cache_keys.append(
-                        '''final CacheKey {0}Key = const CacheKey(CacheKeyType.text, {1}, '{0}');'''.format(
-                            text_key, i
-                        )
+                        f'''final CacheKey {key}Key = const CacheKey(CacheKeyType.{key_type}, {index}, '{key}');'''
                     )
-                    cache_fields.append(
-                        '''GeneratedColumn<String> {0}(table) => {0}Key.textField(table);'''.format(
-                            text_key, i
-                        )
+                    cache_fields.append(f'{column} {key}(table) => {key}Key.{key_type}Field(table);')
+                    table_fields.append(f'final {column} {key};')
+                    table_fields_initializers.append(
+                        f'{key} = message.cacheKeys.{key}Key.{key_type}Field(table)'
                     )
-                for i in range(len(real_keys)):
-                    real_key = real_keys[i]
-                    cache_keys.append(
-                        '''final CacheKey {0}Key = const CacheKey(CacheKeyType.real, {1}, '{0}');'''.format(
-                            real_key, i
-                        )
-                    )
-                    cache_fields.append(
-                        '''GeneratedColumn<double> {0}(table) => {0}Key.realField(table);'''.format(
-                            real_key, i
-                        )
-                    )
-                for i in range(len(date_keys)):
-                    date_key = date_keys[i]
-                    cache_keys.append(
-                        '''final CacheKey {0}Key = const CacheKey(CacheKeyType.date, {1}, '{0}');'''.format(
-                            date_key, i
-                        )
-                    )
-                    cache_fields.append(
-                        '''GeneratedColumn<DateTime> {0}(table) => {0}Key.dateField(table);'''.format(
-                            date_key, i
-                        )
-                    )
+
+                for i, key in enumerate(text_keys):
+                    add_key(i, key, 'text', 'TextColumn')
+
+                for i, key in enumerate(real_keys):
+                    add_key(i, key, 'real', 'RealColumn')
+
+                for i, key in enumerate(date_keys):
+                    add_key(i, key, 'date', 'DateTimeColumn')
+
                 cache_class = templates.cache_keys_class.format(
                     prefix=self.get_client_prefix(), proto=self.proto,
                     text_keys="'" + "', '".join(text_keys) + "'" if text_keys else '',
                     real_keys="'" + "', '".join(real_keys) + "'" if real_keys else '',
                     date_keys="'" + "', '".join(date_keys) + "'" if date_keys else '',
                     fields='\n  '.join(cache_keys + cache_fields)
+                ) + '\n\n' + templates.cache_keys_table_class.format(
+                    prefix=self.get_client_prefix(), proto=self.proto,
+                    fields='\n  '.join(table_fields),
+                    initializers=', '.join(table_fields_initializers)
                 )
 
         return common_fields, rx_fields, tx_fields, cache_class
@@ -164,8 +157,10 @@ class MessagesGenerator:
             return cache_class + '\n\n' + templates.rx_message_class.format(
                 prefix=self.get_client_prefix(),
                 type=self.get_type(),
+                table_type=f'<{self.get_client_prefix()}{self.proto}Table>' if cache_class else '',
                 proto=self.proto,
                 fields='\n  '.join(common_fields + rx_fields),
+                table=f'\n\n  void setTable(tbl) => table = {self.get_client_prefix()}{self.proto}Table(this, tbl);' if cache_class else ''
             )
 
     def __eq__(self, other):
