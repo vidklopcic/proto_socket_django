@@ -26,7 +26,7 @@ class SyncWorker:
 
     def __init__(self):
         self.thread = threading.Thread(target=self.runner)
-        self.thread.setDaemon(True)
+        self.thread.daemon = True
         self.thread.start()
         self.last_db_check = time.time()
 
@@ -67,17 +67,16 @@ class SyncWorker:
 
 
 class AsyncWorker:
-    task_queue: asyncio.Queue = None
+    task_queue: queue.Queue = None
 
     def __init__(self):
-        if self.task_queue is not None:
+        if AsyncWorker.task_queue is not None:
             raise Exception('AsyncWorker already initialized')
-        self.task_queue = asyncio.Queue()
-        self.thread = threading.Thread(target=self._start)
-        self.thread.setDaemon(True)
+        AsyncWorker.task_queue = queue.Queue()
+        self.thread = threading.Thread(target=self.runner)
+        self.thread.daemon = True
         self.thread.start()
         self.last_db_check = time.time()
-        self.loop = None
 
     def check_db(self):
         try:
@@ -88,26 +87,22 @@ class AsyncWorker:
         except:
             traceback.print_exc()
 
-    def _start(self):
-        self.loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self.loop)
-        self.loop.run_until_complete(self.runner())
-
-    async def runner(self):
+    def runner(self):
         forward_exceptions = getattr(settings, 'PSD_FORWARD_EXCEPTIONS', False)
         format_exception = getattr(settings, 'PSD_EXCEPTION_FORMATTER', lambda e: str(e))
         while True:
-            async_task = await self.task_queue.get()
+            async_task = AsyncWorker.task_queue.get()
             self.check_db()
             try:
-                result = await async_task.handler(*async_task.args, **async_task.kwargs)
+                # fixme - figure out how to use django channels if we want to use async in a proper way
+                result = asyncio.run(async_task.handler(*async_task.args, **async_task.kwargs))
                 if async_task.on_result:
                     async_task.on_result(result)
             except InterfaceError:
                 traceback.print_exc()
                 print('restarting worker')
                 self.thread = threading.Thread(target=self.runner)
-                self.thread.setDaemon(True)
+                self.thread.daemon = True
                 self.thread.start()
                 return
             except Exception as e:

@@ -13,6 +13,23 @@ message Ack {
 }
 
 /*
+type = 'ilol|ack';
+origin = server;
+ */
+message IlolAck {
+  string source_event_id = 1;
+}
+
+/*
+type = 'ilol|error';
+origin = server;
+ */
+message IlolError {
+  string source_event_id = 1;
+  string reason = 2;
+}
+
+/*
 type = 'async-progress'
 origin = server
  */

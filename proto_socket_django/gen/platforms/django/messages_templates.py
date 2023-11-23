@@ -2,7 +2,7 @@ server_message = '''
 
 class {prefix}{proto}({prefix}Message):
     type = '{type}'
-    proto = {proto}
+    proto: {proto} = {proto}
     auth_required = {auth}
 '''
 
@@ -26,9 +26,15 @@ class RxMessage(ABC):
     type = None
     auth_required = True
 
-    def __init__(self, data: RxMessageData, user=None):
-        self.data = data
-        self.set_data(data)
+    def __init__(self, data: Optional[Union[RxMessageData, betterproto.Message]] = None, user=None):
+        self.data = None
+        if not data:
+            self.proto = self.proto()
+        elif isinstance(data, betterproto.Message):
+            self.proto = data
+        else:
+            self.data = data
+            self.set_data(data)
         self.user = user
 
     def set_data(self, data: RxMessageData):
