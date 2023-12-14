@@ -38,6 +38,7 @@ message UploadedFile {
   string mime = 4;
   string thumb_url = 5;
   string name = 6;
+  bool downloadable = 7;
 }
 
 /*
