@@ -79,6 +79,8 @@ class ApiWebsocketConsumer(JsonWebsocketConsumer):
     def authenticate(self):
         from rest_framework_simplejwt.state import token_backend
         try:
+            if not self.token:
+                return None
             valid_data = token_backend.decode(self.token)
             assert valid_data['token_type'] == 'access'
             return get_user_model().objects.filter(pk=valid_data['user_id']).first()
