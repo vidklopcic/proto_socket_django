@@ -1,7 +1,9 @@
 import json
 import os
 import shutil
-from pathlib import Path as P
+from pathlib import Path as P, Path
+
+COMMON_PROTO = str(P(__file__).parent.resolve() / 'common')
 
 
 def discover_protos(dir: str):
@@ -13,9 +15,6 @@ def discover_protos(dir: str):
     return protos
 
 
-COMMON_PROTO = str(P(__file__).parent.resolve() / 'common')
-
-
 def delete_existing(dir):
     if os.path.isdir(dir):
         shutil.rmtree(dir)
@@ -24,8 +23,9 @@ def delete_existing(dir):
 
 def get_protos(config, path_arg):
     config['protos'] = set([os.path.expandvars(p) for p in config['protos']])
-    if config.get('include_common', False):
-        config['protos'].add(COMMON_PROTO)
-    proto_path = ' '.join([path_arg + ' ' + i for i in config['protos']])
     protos = [p for ps in [discover_protos(i) for i in config['protos']] for p in ps]
+    proto_dirs = set(config['protos'])
+    if config.get('include_common', True):
+        proto_dirs.add(COMMON_PROTO)
+    proto_path = ' '.join([path_arg + ' ' + i for i in proto_dirs])
     return proto_path, protos
