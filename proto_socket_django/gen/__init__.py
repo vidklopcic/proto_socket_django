@@ -23,7 +23,9 @@ def delete_existing(dir):
 
 
 def get_protos(config, path_arg):
-    config['protos'] = set([os.path.expandvars(p) for p in config['protos']] + [COMMON_PROTO])
+    config['protos'] = set([os.path.expandvars(p) for p in config['protos']])
+    if config.get('include_common', False):
+        config['protos'].add(COMMON_PROTO)
     proto_path = ' '.join([path_arg + ' ' + i for i in config['protos']])
     protos = [p for ps in [discover_protos(i) for i in config['protos']] for p in ps]
     return proto_path, protos
