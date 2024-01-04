@@ -12,8 +12,6 @@ def main():
         sys.exit(1)
 
     config = json.load(open('fps_config.json'))
-    if 'include_common' not in config:
-        config['include_common'] = True
     proto_out = config.get('out', 'src/proto')
     delete_existing(proto_out)
     proto_path, protos = get_protos(config, '-p')

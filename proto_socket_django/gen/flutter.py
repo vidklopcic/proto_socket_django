@@ -12,7 +12,12 @@ def main():
 
     proto_out = 'lib/proto'
     delete_existing(proto_out)
-    proto_path, protos = get_protos(json.load(open('fps_config.json')), '-I')
+
+    config = json.load(open('fps_config.json'))
+    if 'include_common' not in config:
+        config['include_common'] = False
+
+    proto_path, protos = get_protos(config, '-I')
     subprocess.run(f'protoc {proto_path} --dart_out={proto_out} {" ".join(protos)}', shell=True)
     subprocess.run(
         "sed -i '' 's/sfiles.pb.dart/package:flutter_persistent_socket\/proto\/sfiles.pb.dart/g' ./lib/proto/*",
