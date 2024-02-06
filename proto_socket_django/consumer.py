@@ -89,9 +89,11 @@ class ApiWebsocketConsumer(JsonWebsocketConsumer):
             return None
 
     def _authenticate(self):
+        prev_user_pk = self.user.pk if self.user else -1
         self.user = self.authenticate()
         if self.user:
-            self.on_authenticated()
+            if prev_user_pk != self.user.pk:
+                self.on_authenticated()
         else:
             self.send_message(pb.TxTokenInvalid())
             return
