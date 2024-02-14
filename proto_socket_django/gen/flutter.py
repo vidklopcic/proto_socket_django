@@ -2,7 +2,7 @@ import os
 import subprocess
 import sys
 import json
-from . import get_protos, delete_existing
+from . import get_protos, delete_existing, COMMON_PROTO
 from .platforms.flutter.messages_generator import generate
 
 def main():
@@ -18,7 +18,7 @@ def main():
         config['include_common'] = False
 
     proto_path, protos = get_protos(config, '-I')
-    subprocess.run(f'protoc {proto_path} --dart_out={proto_out} {" ".join(protos)}', shell=True)
+    subprocess.run(f'protoc {proto_path} -I {COMMON_PROTO} --dart_out={proto_out} {" ".join(protos)}', shell=True)
     subprocess.run(
         "sed -i '' 's/sfiles.pb.dart/package:flutter_persistent_socket\/proto\/sfiles.pb.dart/g' ./lib/proto/*",
         shell=True
