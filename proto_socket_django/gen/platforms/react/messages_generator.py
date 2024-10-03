@@ -3,6 +3,7 @@ import json
 import os
 import sys
 import re
+from pathlib import Path
 from typing import List
 from proto_socket_django.gen.platforms.react import messages_templates as templates
 from proto_socket_django.gen.platforms import get_psd_messages
@@ -14,7 +15,7 @@ class MessagesGenerator:
         self.proto = proto.strip()
         self.spec = spec.strip()
         self.spec_items = [i.strip() for i in self.spec.split('\n') if i.strip()]
-        self.package = self.path.split(".proto")[0].split("/")[-1]
+        self.package = Path(self.path).stem
 
     def get_type(self):
         return re.search('type.+=.+\'(.+)\'', self.spec).group(1)
