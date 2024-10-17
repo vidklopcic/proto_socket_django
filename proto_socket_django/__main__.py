@@ -8,12 +8,10 @@ def is_django_project():
 
 
 def is_flutter_project():
-    # You can define similar logic to detect a Flutter project
     return os.path.isfile('pubspec.yaml') and os.path.isfile('fps_config.json')
 
 
 def is_react_project():
-    # Define similar logic to detect a React project
     return os.path.isdir('node_modules') and os.path.isfile('fps_config.json')
 
 

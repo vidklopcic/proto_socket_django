@@ -24,7 +24,7 @@ setup(
     url='https://github.com/vidklopic/flutter_persistent_socket',
     license='MIT',
     install_requires=[
-        'Django>=2.1',
+        'Django>=4',
         'djangorestframework-simplejwt>=5.3.0',
         'betterproto==1.2.5',
         'channels',

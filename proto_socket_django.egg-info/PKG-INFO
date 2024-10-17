@@ -6,7 +6,10 @@ Home-page: https://github.com/vidklopic/flutter_persistent_socket
 Author: Vid Klopcic
 Author-email: klopcic.vid@gmail.com
 License: MIT
-Platform: UNKNOWN
+Requires-Dist: Django>=4
+Requires-Dist: djangorestframework-simplejwt>=5.3.0
+Requires-Dist: betterproto==1.2.5
+Requires-Dist: channels>=4
 
 Protobuf Websocket Django
 =========================
@@ -14,4 +17,3 @@ A simple library that works in combination
 with `flutter_persistent_socket <https://github.com/vidklopcic/flutter_persistent_socket>`_ or `proto_socket_typescript <https://github.com/vidklopcic/proto_socket_typescript>`_ library.
 
 Docs: TODO
-
