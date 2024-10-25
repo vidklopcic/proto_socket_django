@@ -1,4 +1,4 @@
 channels
-django
-betterproto==1.2.5
+django>=4
+betterproto==2.0.0b7
 djangorestframework-simplejwt>=5.3.0

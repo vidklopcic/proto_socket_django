@@ -1,0 +1,39 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "proto-socket-django"
+version = "0.1.0"
+description = "A Django-based library for building web applications with real-time communication"
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+authors = [
+    {name = "Vid Klopcic", email = "klopcic.vid@gmail.com"},
+]
+dependencies = [
+    "Django>=4.0",
+    "djangorestframework-simplejwt>=5.3.0",
+    "betterproto==2.0.0b7",
+    "channels>=4.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/vidklopcic/proto-socket-django"
+Documentation = "https://proto-socket-django.readthedocs.io/"
+Repository = "https://github.com/vidklopcic/proto-socket-django.git"
+
+[tool.hatch.build]
+include = [
+    "proto_socket_django/**/*.py",
+    "proto_socket_django/**/*.proto",
+    "proto_socket_django/**/*.txt",
+    "proto_socket_django/**/*.rst",
+    "proto_socket_django/**/*.md",
+]
+exclude = [
+    "*.pyc",
+    "*/__pycache__/*",
+    "*.egg-info",
+]

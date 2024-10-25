@@ -1,2 +1,6 @@
-include *.txt *.ini *.cfg *.rst
-recursive-include api *.ico *.png *.css *.gif *.jpg *.txt *.js *.html *.xml *.proto
+include LICENSE README.md pyproject.toml requirements.txt
+recursive-include proto_socket_django *.py *.proto *.txt *.rst *.md
+recursive-include proto_socket_django/gen/common *.proto
+recursive-include proto_socket_django/gen/platforms *.py *.proto
+global-exclude *.pyc
+global-exclude __pycache__/*
