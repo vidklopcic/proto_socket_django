@@ -1,8 +1,7 @@
 import sys
 
 if '-m' not in sys.argv:
-    from proto.messages import *
-    from . import betterproto_patch
-    from .consumer import ApiWebsocketConsumer
+    import proto.messages as pb
+    from .consumer import ApiWebsocketConsumer, FPSReceiver, FPSReceiverError, receive
     from . import utils
-    from .serializers import ProtoSerializer
+    from . import serializers
