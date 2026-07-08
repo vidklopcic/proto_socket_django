@@ -7,7 +7,7 @@ README = open(os.path.join(here, 'README.rst')).read()
 
 setup(
     name='proto-socket-django',
-    version='0.1',
+    version='1.2.7',
     packages=[
         'proto_socket_django',
         'proto_socket_django.gen',

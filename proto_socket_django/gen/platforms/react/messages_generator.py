@@ -112,11 +112,11 @@ def generate(protos: List[str], is_proto_socket_module=False, proto_out='./src')
     else:
         imports.add('import {SocketRxMessage, SocketRxMessageData, SocketTxMessage} from "proto_socket_typescript";')
 
-    import_names = ', '.join(set([i.package for i in generators]))
+    import_names = ', '.join(sorted(set([i.package for i in generators])))
     imports.add(f'import {{{import_names}}} from "./compiled";')
 
     with open(os.path.join(proto_out, 'messages.ts'), 'w', encoding='utf-8') as f:
-        f.write('\n'.join(imports))
+        f.write('\n'.join(sorted(imports)))
 
         f.write('\n\nexport namespace proto {')
         rx_classnames = []

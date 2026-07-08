@@ -57,7 +57,7 @@ def generate(protos: List[str]):
 
     generators.sort(key=lambda g: f'{g.package}_{g.proto}')
     with open('proto/messages.py', 'w', encoding='utf-8') as f:
-        f.write('\n'.join(imports))
+        f.write('\n'.join(sorted(imports)))
         f.write(templates.boilerplate)
         for generator in generators:
             try:

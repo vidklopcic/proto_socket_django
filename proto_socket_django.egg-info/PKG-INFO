@@ -1,6 +1,6 @@
-Metadata-Version: 2.1
+Metadata-Version: 2.4
 Name: proto-socket-django
-Version: 0.1
+Version: 1.2.7
 Summary: A simple library that works with flutter_persistent_socket library.
 Home-page: https://github.com/vidklopic/flutter_persistent_socket
 Author: Vid Klopcic
@@ -9,7 +9,14 @@ License: MIT
 Requires-Dist: Django>=4
 Requires-Dist: djangorestframework-simplejwt>=5.3.0
 Requires-Dist: betterproto==1.2.5
-Requires-Dist: channels>=4
+Requires-Dist: channels
+Dynamic: author
+Dynamic: author-email
+Dynamic: description
+Dynamic: home-page
+Dynamic: license
+Dynamic: requires-dist
+Dynamic: summary
 
 Protobuf Websocket Django
 =========================

@@ -200,7 +200,7 @@ def generate(protos: List[str]):
     imports.update(set([i.get_import() for i in generators]))
 
     with open('./lib/messages.dart', 'w', encoding='utf-8') as f:
-        f.write('\n'.join(imports))
+        f.write('\n'.join(sorted(imports)))
 
         rx_classnames = []
         for generator in generators:
